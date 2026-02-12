@@ -19,7 +19,7 @@ class TestImageClassifierInitialization:
         assert classifier.github_client is not None
         assert classifier.github_client.token == "explicit_token"
 
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_no_explicit_token_still_creates_github_client(self, mock_gh_cli):
         """Test that passing None for token still creates client (which will try to get token)."""
         mock_gh_cli.return_value = "cli_token"
@@ -35,7 +35,7 @@ class TestImageClassifierInitialization:
             assert classifier.github_client is not None
             assert classifier.github_client.token == "cli_token"
 
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     @patch.dict("os.environ", {"GITHUB_TOKEN": "env_token"})
     def test_none_token_uses_env_var(self, mock_gh_cli):
         """Test that None token allows GitHubMetadataClient to use env var."""
@@ -46,7 +46,7 @@ class TestImageClassifierInitialization:
         assert classifier.github_client is not None
         assert classifier.github_client.token == "env_token"
 
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_none_token_uses_gh_cli(self, mock_gh_cli):
         """Test that None token allows GitHubMetadataClient to use gh CLI."""
         mock_gh_cli.return_value = "from_gh_cli"
@@ -65,7 +65,7 @@ class TestImageClassifierInitialization:
 class TestImageClassifierTokenPassing:
     """Tests for token passing through the classification stack."""
 
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_token_flows_through_stack(self, mock_gh_cli):
         """Test that token properly flows from CLI -> ImageClassifier -> GitHubMetadataClient."""
         mock_gh_cli.return_value = "test_token"
@@ -88,7 +88,7 @@ class TestImageClassifierTokenPassing:
     def test_explicit_token_overrides_all_sources(self):
         """Test that explicit token takes precedence over all other sources."""
         with patch.dict("os.environ", {"GITHUB_TOKEN": "env_token"}):
-            with patch("integrations.github_metadata.get_github_token_from_gh_cli", return_value="cli_token"):
+            with patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli", return_value="cli_token"):
                 classifier = ImageClassifier(github_token="explicit_token", auto_update=False)
 
                 assert classifier.github_client.token == "explicit_token"
@@ -97,7 +97,7 @@ class TestImageClassifierTokenPassing:
 class TestImageClassifierGitHubFallback:
     """Tests for GitHub fallback behavior."""
 
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_get_tier_fails_without_token_and_auto_update(self, mock_gh_cli):
         """Test that get_image_tier fails gracefully when no token and auto_update enabled."""
         mock_gh_cli.return_value = None
@@ -117,7 +117,7 @@ class TestImageClassifierGitHubFallback:
 
     def test_get_tier_fails_without_token_when_disabled(self):
         """Test that get_image_tier fails when auto_update disabled and image not in cache."""
-        with patch("integrations.github_metadata.get_github_token_from_gh_cli", return_value=None):
+        with patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli", return_value=None):
             with patch.dict("os.environ", {}, clear=True):
                 import os
                 if "GITHUB_TOKEN" in os.environ:

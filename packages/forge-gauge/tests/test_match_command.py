@@ -394,7 +394,7 @@ images:
   golang*: go
 """
 
-    @patch('commands.match.ImageMatcher')
+    @patch('forge_gauge.commands.match.ImageMatcher')
     def test_match_images_all_matched(self, mock_matcher_class, tmp_path, mock_dfc_yaml):
         """Test matching when all images match successfully."""
         # Setup input
@@ -422,7 +422,7 @@ images:
         ]
 
         # Run matching
-        with patch('commands.match.search_github_issues_for_images') as mock_search:
+        with patch('forge_gauge.commands.match.search_github_issues_for_images') as mock_search:
             mock_search.return_value = ([], [])  # No issue matches
             matched, unmatched = match_images(
                 input_file=input_file,
@@ -436,7 +436,7 @@ images:
         assert len(unmatched) == 0
         assert output_file.exists()
 
-    @patch('commands.match.ImageMatcher')
+    @patch('forge_gauge.commands.match.ImageMatcher')
     def test_match_images_with_unmatched(self, mock_matcher_class, tmp_path):
         """Test matching with some unmatched images."""
         # Setup input
@@ -464,7 +464,7 @@ images:
         ]
 
         # Run matching
-        with patch('commands.match.search_github_issues_for_images') as mock_search:
+        with patch('forge_gauge.commands.match.search_github_issues_for_images') as mock_search:
             mock_search.return_value = ([], ["custom-app:v1.0"])  # No issue matches
             matched, unmatched = match_images(
                 input_file=input_file,
@@ -479,7 +479,7 @@ images:
         assert unmatched[0] == "custom-app:v1.0"
         assert output_file.exists()
 
-    @patch('commands.match.ImageMatcher')
+    @patch('forge_gauge.commands.match.ImageMatcher')
     def test_match_images_low_confidence(self, mock_matcher_class, tmp_path):
         """Test matching with low confidence results."""
         # Setup input
@@ -500,7 +500,7 @@ images:
         )
 
         # Run matching
-        with patch('commands.match.search_github_issues_for_images') as mock_search:
+        with patch('forge_gauge.commands.match.search_github_issues_for_images') as mock_search:
             mock_search.return_value = ([], ["nginx:latest"])  # No issue matches
             matched, unmatched = match_images(
                 input_file=input_file,
@@ -515,7 +515,7 @@ images:
         assert len(unmatched) == 1
         assert unmatched[0] == "nginx:latest"
 
-    @patch('commands.match.ImageMatcher')
+    @patch('forge_gauge.commands.match.ImageMatcher')
     def test_match_images_min_confidence_threshold(self, mock_matcher_class, tmp_path):
         """Test min_confidence threshold filtering."""
         # Setup input
@@ -543,7 +543,7 @@ images:
         ]
 
         # Run matching with 0.7 threshold
-        with patch('commands.match.search_github_issues_for_images') as mock_search:
+        with patch('forge_gauge.commands.match.search_github_issues_for_images') as mock_search:
             mock_search.return_value = ([], ["python:3.12"])  # No issue matches
             matched, unmatched = match_images(
                 input_file=input_file,

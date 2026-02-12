@@ -66,7 +66,7 @@ class TestRegistryAccessChecker:
         assert checker.is_accessible("mycompany.io/image:latest")
         assert checker.is_accessible("MYCOMPANY.IO/image:latest")
 
-    @patch('utils.registry_access.image_exists_in_registry')
+    @patch('forge_gauge.utils.registry_access.image_exists_in_registry')
     def test_iron_bank_accessible_with_credentials(self, mock_exists):
         """Test that Iron Bank is accessible when credentials are valid."""
         mock_exists.return_value = True
@@ -77,7 +77,7 @@ class TestRegistryAccessChecker:
         assert result is True
         mock_exists.assert_called_once()
 
-    @patch('utils.registry_access.image_exists_in_registry')
+    @patch('forge_gauge.utils.registry_access.image_exists_in_registry')
     def test_iron_bank_not_accessible_without_credentials(self, mock_exists):
         """Test that Iron Bank is not accessible when credentials fail."""
         mock_exists.return_value = False
@@ -87,7 +87,7 @@ class TestRegistryAccessChecker:
 
         assert result is False
 
-    @patch('utils.registry_access.image_exists_in_registry')
+    @patch('forge_gauge.utils.registry_access.image_exists_in_registry')
     def test_iron_bank_access_cached(self, mock_exists):
         """Test that Iron Bank access status is cached after first check."""
         mock_exists.return_value = True
@@ -192,7 +192,7 @@ third.registry.net
         # DEFAULT_CONFIG_FILE is None; the actual path is resolved via get_config_path() at init time
         assert RegistryAccessChecker.DEFAULT_CONFIG_FILE is None
 
-    @patch('utils.registry_access.image_exists_in_registry')
+    @patch('forge_gauge.utils.registry_access.image_exists_in_registry')
     def test_iron_bank_access_check_exception_handling(self, mock_exists):
         """Test that exceptions during Iron Bank access check are handled."""
         mock_exists.side_effect = Exception("Network error")

@@ -112,7 +112,7 @@ class TestTokenRefreshWorkflow:
     """Integration tests for the token refresh workflow."""
 
     @patch("subprocess.run")
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_full_refresh_workflow(self, mock_get_token, mock_subprocess):
         """Test the full workflow: detect SAML error -> refresh -> get new token."""
         # Simulate successful refresh

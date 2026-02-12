@@ -40,7 +40,7 @@ class TestLLMMatcher:
     @pytest.fixture
     def llm_matcher(self, tmp_path, mock_anthropic_client, mock_catalog):
         """Create LLMMatcher with mocked API client and catalog."""
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher = LLMMatcher(
                     api_key="test-key",
@@ -88,7 +88,7 @@ class TestLLMMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher = LLMMatcher(
                     api_key="test-key",
@@ -114,7 +114,7 @@ class TestLLMMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher = LLMMatcher(
                     api_key="test-key",
@@ -133,7 +133,7 @@ class TestLLMMatcher:
         mock_client = Mock()
         mock_client.messages.create.side_effect = Exception("API error")
 
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher = LLMMatcher(
                     api_key="test-key",
@@ -157,7 +157,7 @@ class TestLLMMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher = LLMMatcher(
                     api_key="test-key",
@@ -229,7 +229,7 @@ class TestLLMMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher = LLMMatcher(
                     api_key="test-key",
@@ -264,7 +264,7 @@ class TestLLMMatcher:
     def test_llm_match_cache_persistence(self, tmp_path, mock_anthropic_client, mock_catalog):
         """Test that cache persists across matcher instances."""
         # First matcher instance
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher1 = LLMMatcher(
                     api_key="test-key",
@@ -274,7 +274,7 @@ class TestLLMMatcher:
                 assert not result1.cached
 
         # Second matcher instance (new object, same cache dir)
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher2 = LLMMatcher(
                     api_key="test-key",
@@ -289,7 +289,7 @@ class TestLLMMatcher:
     def test_llm_match_different_models_separate_cache(self, tmp_path, mock_anthropic_client, mock_catalog):
         """Test that different models have separate cache entries."""
         # First matcher with sonnet model
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher1 = LLMMatcher(
                     api_key="test-key",
@@ -300,7 +300,7 @@ class TestLLMMatcher:
                 assert not result1.cached
 
         # Second matcher with haiku model
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher2 = LLMMatcher(
                     api_key="test-key",
@@ -315,7 +315,7 @@ class TestLLMMatcher:
     def test_transient_failure_not_cached(self, tmp_path, mock_anthropic_client):
         """Test that transient failures (catalog not available, API errors) are not cached."""
         # Matcher with empty catalog (simulates catalog unavailable)
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=[]):
                 matcher = LLMMatcher(
                     api_key="test-key",
@@ -339,7 +339,7 @@ class TestLLMMatcher:
         mock_message.content = [mock_content]
         mock_anthropic_client.messages.create.return_value = mock_message
 
-        with patch('utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
+        with patch('forge_gauge.utils.llm_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
             with patch.object(LLMMatcher, '_load_full_catalog', return_value=mock_catalog):
                 matcher2 = LLMMatcher(
                     api_key="test-key",

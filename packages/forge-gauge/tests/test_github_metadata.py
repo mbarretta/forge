@@ -98,7 +98,7 @@ class TestGitHubMetadataClient:
         assert client.headers["Authorization"] == "token explicit_token"
 
     @patch.dict("os.environ", {"GITHUB_TOKEN": "env_token"})
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_env_var_token_second_priority(self, mock_gh_cli):
         """Test that env var token is used if no explicit token."""
         mock_gh_cli.return_value = "cli_token"
@@ -108,7 +108,7 @@ class TestGitHubMetadataClient:
         assert client.token == "env_token"
 
     @patch.dict("os.environ", {}, clear=True)
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_gh_cli_token_third_priority(self, mock_gh_cli):
         """Test that gh CLI token is used if no explicit or env var token."""
         mock_gh_cli.return_value = "cli_token"
@@ -124,7 +124,7 @@ class TestGitHubMetadataClient:
         mock_gh_cli.assert_called_once()
 
     @patch.dict("os.environ", {}, clear=True)
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_no_token_available(self, mock_gh_cli, caplog):
         """Test behavior when no token is available."""
         mock_gh_cli.return_value = None
@@ -152,7 +152,7 @@ class TestGitHubMetadataClient:
 
     def test_headers_without_token(self):
         """Test that Authorization header is not set without token."""
-        with patch("integrations.github_metadata.get_github_token_from_gh_cli", return_value=None):
+        with patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli", return_value=None):
             with patch.dict("os.environ", {}, clear=True):
                 import os
                 if "GITHUB_TOKEN" in os.environ:
@@ -163,7 +163,7 @@ class TestGitHubMetadataClient:
                 assert client.headers["Accept"] == "application/vnd.github.v3.raw"
                 assert "Authorization" not in client.headers
 
-    @patch("integrations.github_metadata.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_metadata.get_github_token_from_gh_cli")
     def test_token_fallback_chain(self, mock_gh_cli):
         """Test complete token fallback chain."""
         mock_gh_cli.return_value = "cli_fallback"

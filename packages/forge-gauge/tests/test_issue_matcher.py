@@ -65,7 +65,7 @@ def mock_anthropic_client():
 @pytest.fixture
 def issue_matcher(tmp_path, mock_anthropic_client):
     """Create IssueMatcher with mocked API client."""
-    with patch('utils.issue_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
+    with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=mock_anthropic_client):
         matcher = IssueMatcher(
             api_key="test-key",
             model="claude-sonnet-4-5",
@@ -116,7 +116,7 @@ class TestIssueMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
             matcher = IssueMatcher(
                 api_key="test-key",
                 cache_dir=tmp_path,
@@ -140,7 +140,7 @@ class TestIssueMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
             matcher = IssueMatcher(
                 api_key="test-key",
                 cache_dir=tmp_path,
@@ -192,7 +192,7 @@ class TestIssueMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
             matcher = IssueMatcher(
                 api_key="test-key",
                 cache_dir=tmp_path,
@@ -216,7 +216,7 @@ class TestIssueMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
             matcher = IssueMatcher(
                 api_key="test-key",
                 cache_dir=tmp_path,
@@ -244,7 +244,7 @@ class TestIssueMatcher:
         mock_message.content = [mock_content]
         mock_client.messages.create.return_value = mock_message
 
-        with patch('utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
             matcher = IssueMatcher(
                 api_key="test-key",
                 cache_dir=tmp_path,
@@ -261,7 +261,7 @@ class TestIssueMatcherCache:
 
     def test_separate_cache_table(self, tmp_path):
         """Test that issue matcher uses a separate cache table from llm_cache."""
-        with patch('utils.issue_matcher.anthropic.Anthropic', return_value=Mock()):
+        with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=Mock()):
             matcher = IssueMatcher(
                 api_key="test-key",
                 cache_dir=tmp_path,
@@ -292,7 +292,7 @@ class TestIssueMatcherCache:
         mock_client.messages.create.return_value = mock_message
 
         # First instance - makes API call
-        with patch('utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
+        with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=mock_client):
             matcher1 = IssueMatcher(api_key="test-key", cache_dir=tmp_path)
             result1 = matcher1.match("envoy:v1", sample_issues)
             assert result1.cached is False
@@ -300,7 +300,7 @@ class TestIssueMatcherCache:
 
         # Second instance - should use cache
         mock_client2 = Mock()
-        with patch('utils.issue_matcher.anthropic.Anthropic', return_value=mock_client2):
+        with patch('forge_gauge.utils.issue_matcher.anthropic.Anthropic', return_value=mock_client2):
             matcher2 = IssueMatcher(api_key="test-key", cache_dir=tmp_path)
             result2 = matcher2.match("envoy:v1", sample_issues)
             assert result2.cached is True

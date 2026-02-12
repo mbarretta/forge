@@ -40,7 +40,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 1.0
         assert result.method == "manual"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_registry_strip_success(self, mock_exists, tmp_path):
         """Test Strategy 2: Registry strip (90% confidence)."""
         # Create finder without manual mappings
@@ -58,7 +58,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.90
         assert result.method == "registry_strip"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_registry_strip_gcr(self, mock_exists, tmp_path):
         """Test registry strip with GCR private registry."""
         finder = UpstreamImageFinder(
@@ -75,7 +75,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.85
         assert result.method == "registry_strip"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_registry_strip_ecr(self, mock_exists, tmp_path):
         """Test registry strip with AWS ECR."""
         finder = UpstreamImageFinder(
@@ -91,7 +91,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.90
         assert result.method == "registry_strip"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_common_registry_dockerhub(self, mock_exists, tmp_path):
         """Test Strategy 3: Common registries (80% confidence) - Docker Hub."""
         finder = UpstreamImageFinder(
@@ -108,7 +108,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.80
         assert result.method == "common_registry"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_common_registry_quay(self, mock_exists, tmp_path):
         """Test common registries - Quay.io fallback."""
         finder = UpstreamImageFinder(
@@ -125,8 +125,8 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.80
         assert result.method == "common_registry"
 
-    @patch('utils.upstream_finder.STRATEGY_THRESHOLDS', {"base_extract": 0.5})
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.STRATEGY_THRESHOLDS', {"base_extract": 0.5})
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_base_extraction_python(self, mock_exists, tmp_path):
         """Test Strategy 4: Base extraction (70% confidence) - Python.
 
@@ -150,8 +150,8 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.70
         assert result.method == "base_extract"
 
-    @patch('utils.upstream_finder.STRATEGY_THRESHOLDS', {"base_extract": 0.5})
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.STRATEGY_THRESHOLDS', {"base_extract": 0.5})
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_base_extraction_nginx(self, mock_exists, tmp_path):
         """Test base extraction - Nginx."""
         finder = UpstreamImageFinder(
@@ -171,8 +171,8 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.70
         assert result.method == "base_extract"
 
-    @patch('utils.upstream_finder.STRATEGY_THRESHOLDS', {"base_extract": 0.5})
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.STRATEGY_THRESHOLDS', {"base_extract": 0.5})
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_base_extraction_postgres(self, mock_exists, tmp_path):
         """Test base extraction - Postgres."""
         finder = UpstreamImageFinder(
@@ -192,7 +192,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.70
         assert result.method == "base_extract"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_no_match_found(self, mock_exists, tmp_path):
         """Test when no upstream is found."""
         finder = UpstreamImageFinder(
@@ -209,7 +209,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.0
         assert result.method == "none"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_base_extract_filtered_by_per_strategy_threshold(self, mock_exists, tmp_path):
         """Test that base_extract (70% confidence) is filtered by its 85% per-strategy threshold.
 
@@ -271,7 +271,7 @@ class TestUpstreamImageFinder:
         # With digest
         assert finder._extract_full_path("org/image@sha256:abc123") == "org/image"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_common_registry_gcr_full_path(self, mock_exists, tmp_path):
         """Test gcr.io registry with full path preserved (kaniko-project/executor case)."""
         finder = UpstreamImageFinder(
@@ -292,7 +292,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.80
         assert result.method == "common_registry"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_common_registry_tries_full_path_first(self, mock_exists, tmp_path):
         """Test that full path is tried before base name in common registries."""
         finder = UpstreamImageFinder(
@@ -348,7 +348,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 1.0
         assert result.method == "manual"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_strategy_fallback_order(self, mock_exists, tmp_path):
         """Test that strategies are tried in correct order."""
         finder = UpstreamImageFinder(
@@ -366,7 +366,7 @@ class TestUpstreamImageFinder:
         assert result.method == "registry_strip_unverified"
         assert result.upstream_image == "special-app:v1"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_verification_error_handling(self, mock_exists, tmp_path):
         """Test handling of verification errors."""
         finder = UpstreamImageFinder(
@@ -384,7 +384,7 @@ class TestUpstreamImageFinder:
         assert result.confidence == 0.0
         assert result.method == "none"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_node_exporter_not_matched_to_node(self, mock_exists, tmp_path):
         """Test that node-exporter does NOT match to Node.js 'node' image (issue #14)."""
         finder = UpstreamImageFinder(
@@ -398,7 +398,7 @@ class TestUpstreamImageFinder:
         # Should NOT extract "node" - exporter suffix indicates derivative tool
         assert result.upstream_image is None or result.upstream_image != "node:latest"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_redis_exporter_not_matched_to_redis(self, mock_exists, tmp_path):
         """Test that redis-exporter does NOT match to base 'redis' image (issue #14)."""
         finder = UpstreamImageFinder(
@@ -412,7 +412,7 @@ class TestUpstreamImageFinder:
         # Should NOT extract "redis" - exporter suffix indicates derivative tool
         assert result.upstream_image is None or result.upstream_image != "redis:latest"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_kafka_operator_not_matched_to_kafka(self, mock_exists, tmp_path):
         """Test that kafka-operator does NOT match to base 'kafka' image."""
         finder = UpstreamImageFinder(
@@ -430,7 +430,7 @@ class TestUpstreamImageFinder:
     # RegistryAccessChecker (src/utils/registry_access.py). See test_registry_access.py
     # for Iron Bank access checking tests.
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_postgres_controller_not_matched_to_postgres(self, mock_exists, tmp_path):
         """Test that postgres-controller does NOT match to base 'postgres' image."""
         finder = UpstreamImageFinder(
@@ -444,7 +444,7 @@ class TestUpstreamImageFinder:
         # Should NOT extract "postgres" - controller suffix indicates derivative tool
         assert result.upstream_image is None or result.upstream_image != "postgres:latest"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_csi_node_driver_not_matched_to_node(self, mock_exists, tmp_path):
         """Test that csi-node-driver-registrar does NOT match to Node.js 'node' image.
 
@@ -462,7 +462,7 @@ class TestUpstreamImageFinder:
         # Should NOT extract "node" - it's in the middle of an infrastructure tool name
         assert result.upstream_image is None or result.upstream_image != "node:latest"
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
     def test_calico_node_not_matched_to_node(self, mock_exists, tmp_path):
         """Test that calico/node does NOT match to Node.js 'node' image.
 
@@ -484,8 +484,8 @@ class TestUpstreamImageFinder:
 class TestUpstreamFinderIntegration:
     """Integration tests for upstream finder with ImageMatcher."""
 
-    @patch('utils.upstream_finder.image_exists_in_registry')
-    @patch('utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.upstream_finder.image_exists_in_registry')
+    @patch('forge_gauge.utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
     def test_end_to_end_matching_with_upstream(self, mock_verify_cg, mock_verify_upstream, tmp_path):
         """Test end-to-end: upstream discovery + Chainguard matching."""
         from forge_gauge.utils.image_matcher import ImageMatcher

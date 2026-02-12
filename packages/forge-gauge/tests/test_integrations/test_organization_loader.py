@@ -36,7 +36,7 @@ class TestIsSupportIdentity:
 
     def test_support_identity_detected(self):
         """Test detection when authenticated as support identity."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=0,
                 stdout=json.dumps({
@@ -51,7 +51,7 @@ class TestIsSupportIdentity:
 
     def test_normal_identity_not_detected(self):
         """Test that normal identities are not detected as support."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=0,
                 stdout=json.dumps({
@@ -66,7 +66,7 @@ class TestIsSupportIdentity:
 
     def test_chainctl_not_available(self):
         """Test handling when chainctl is not available."""
-        with patch('utils.chainctl_auth.shutil.which') as mock_which:
+        with patch('forge_gauge.utils.chainctl_auth.shutil.which') as mock_which:
             mock_which.return_value = None
 
             result = is_support_identity()
@@ -75,7 +75,7 @@ class TestIsSupportIdentity:
 
     def test_chainctl_auth_fails(self):
         """Test handling when chainctl auth status fails."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=1,
                 stdout="",
@@ -88,7 +88,7 @@ class TestIsSupportIdentity:
 
     def test_invalid_json_response(self):
         """Test handling of invalid JSON from chainctl."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=0,
                 stdout="not json",
@@ -104,7 +104,7 @@ class TestHasOrgPullAccess:
 
     def test_has_access_with_viewer_role(self):
         """Test detection when user has viewer role on org."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=0,
                 stdout=json.dumps({
@@ -122,7 +122,7 @@ class TestHasOrgPullAccess:
 
     def test_has_access_with_owner_role(self):
         """Test detection when user has owner role on org."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=0,
                 stdout=json.dumps({
@@ -139,7 +139,7 @@ class TestHasOrgPullAccess:
 
     def test_no_access_org_not_in_capabilities(self):
         """Test detection when org is not in user's capabilities."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=0,
                 stdout=json.dumps({
@@ -156,7 +156,7 @@ class TestHasOrgPullAccess:
 
     def test_no_access_empty_capabilities(self):
         """Test detection when user has no capabilities."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=0,
                 stdout=json.dumps({
@@ -171,7 +171,7 @@ class TestHasOrgPullAccess:
 
     def test_chainctl_fails(self):
         """Test handling when chainctl command fails."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=1,
                 stdout="",
@@ -188,7 +188,7 @@ class TestGetSupportIdentityId:
 
     def test_support_identity_found(self):
         """Test successful lookup of support identity."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=0,
                 stdout=f"{CHAINGUARD_SUPPORT_UIDP}/abc123def456\n",
@@ -205,7 +205,7 @@ class TestGetSupportIdentityId:
 
     def test_support_identity_not_found(self):
         """Test when no support identity exists for org."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=1,
                 stdout="",
@@ -218,7 +218,7 @@ class TestGetSupportIdentityId:
 
     def test_chainctl_not_available(self):
         """Test handling when chainctl is not installed."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.side_effect = FileNotFoundError()
 
             result = get_support_identity_id("test-org")
@@ -231,7 +231,7 @@ class TestLoginAsSupport:
 
     def test_login_success(self):
         """Test successful login as support identity."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.side_effect = [
                 # get_support_identity_id call
                 Mock(returncode=0, stdout=f"{CHAINGUARD_SUPPORT_UIDP}/abc123\n", stderr=""),
@@ -246,7 +246,7 @@ class TestLoginAsSupport:
 
     def test_login_no_support_identity(self):
         """Test login fails when no support identity exists."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.return_value = Mock(
                 returncode=1,
                 stdout="",
@@ -259,7 +259,7 @@ class TestLoginAsSupport:
 
     def test_login_auth_fails(self):
         """Test handling when login command fails."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.side_effect = [
                 # get_support_identity_id call succeeds
                 Mock(returncode=0, stdout=f"{CHAINGUARD_SUPPORT_UIDP}/abc123\n", stderr=""),
@@ -277,7 +277,7 @@ class TestRestoreNormalIdentity:
 
     def test_restore_success(self):
         """Test successful identity restoration."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.side_effect = [
                 # logout call
                 Mock(returncode=0, stdout="Logged out", stderr=""),
@@ -292,7 +292,7 @@ class TestRestoreNormalIdentity:
 
     def test_restore_login_fails(self):
         """Test handling when re-login fails."""
-        with patch('utils.chainctl_auth.subprocess.run') as mock_run:
+        with patch('forge_gauge.utils.chainctl_auth.subprocess.run') as mock_run:
             mock_run.side_effect = [
                 # logout call succeeds
                 Mock(returncode=0, stdout="Logged out", stderr=""),

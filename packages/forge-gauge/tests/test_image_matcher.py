@@ -89,7 +89,7 @@ images:
         assert result.confidence == 1.0
         assert result.method == "manual"
 
-    @patch('utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
     def test_tier3_heuristic_fips_match(self, mock_verify, image_matcher):
         """Test Tier 3: Heuristic matches FIPS image to FIPS Chainguard private image."""
         # Mock verification to return True for the first candidate
@@ -103,7 +103,7 @@ images:
         assert result.confidence == 0.85
         assert result.method == "heuristic"
 
-    @patch('utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
     def test_tier3_heuristic_non_fips_skips_fips_images(self, mock_verify, image_matcher):
         """Test Tier 3: Non-FIPS image should not match to FIPS Chainguard private image."""
         # Mock verification to return True for non-FIPS variant only
@@ -126,7 +126,7 @@ images:
                       if '-fips' in str(call)]
         assert len(fips_calls) == 0, "FIPS variant should not be checked for non-FIPS image"
 
-    @patch('utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
     def test_tier3_heuristic_no_fips_match(self, mock_verify, image_matcher):
         """Test Tier 3: Heuristic match without -fips suffix (private registry)."""
         # Mock verification to return True
@@ -139,7 +139,7 @@ images:
         assert result.confidence == 0.85
         assert result.method == "heuristic"
 
-    @patch('utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
     def test_tier4_no_match(self, mock_verify, image_matcher):
         """Test Tier 4: No match found returns 0 confidence."""
         # Mock verification to always return False
@@ -299,7 +299,7 @@ images:
         assert "cgr.dev/chainguard-private/kafka-fips" in candidates
         assert "cgr.dev/chainguard-private/kafka" in candidates
 
-    @patch('integrations.github_metadata.GitHubMetadataClient.get_image_tier')
+    @patch('forge_gauge.integrations.github_metadata.GitHubMetadataClient.get_image_tier')
     def test_verify_image_exists_success(self, mock_get_tier, image_matcher):
         """Test image verification when image exists."""
         mock_get_tier.return_value = "free"
@@ -309,7 +309,7 @@ images:
         assert result is True
         mock_get_tier.assert_called_once_with("python")
 
-    @patch('integrations.github_metadata.GitHubMetadataClient.get_image_tier')
+    @patch('forge_gauge.integrations.github_metadata.GitHubMetadataClient.get_image_tier')
     def test_verify_image_exists_not_found(self, mock_get_tier, image_matcher):
         """Test image verification when image doesn't exist."""
         mock_get_tier.return_value = None
@@ -318,8 +318,8 @@ images:
 
         assert result is False
 
-    @patch('utils.docker_utils.image_exists_in_registry')
-    @patch('integrations.github_metadata.GitHubMetadataClient.get_image_tier')
+    @patch('forge_gauge.utils.docker_utils.image_exists_in_registry')
+    @patch('forge_gauge.integrations.github_metadata.GitHubMetadataClient.get_image_tier')
     def test_verify_image_exists_error(self, mock_get_tier, mock_docker_verify, image_matcher):
         """Test image verification when both API and docker verification fail."""
         mock_get_tier.side_effect = Exception("API error")
@@ -391,8 +391,8 @@ images:
         assert result.confidence == 1.0
         assert result.chainguard_image == "cgr.dev/chainguard-private/redis-fips:latest"
 
-    @patch('utils.image_matcher.Tier4LLMMatcher._verify_image_exists')
-    @patch('utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.image_matcher.Tier4LLMMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
     def test_tier4_llm_hallucination_rejected(self, mock_tier3_verify, mock_tier4_verify, tmp_path, mock_dfc_yaml):
         """Test that LLM hallucinations are rejected when image doesn't exist."""
         # Create DFC mappings
@@ -432,8 +432,8 @@ images:
         verify_calls = [call[0][0] for call in mock_tier4_verify.call_args_list]
         assert "cgr.dev/chainguard-private/jmeter:latest" in verify_calls
 
-    @patch('utils.image_matcher.Tier4LLMMatcher._verify_image_exists')
-    @patch('utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.image_matcher.Tier4LLMMatcher._verify_image_exists')
+    @patch('forge_gauge.utils.image_matcher.Tier3HeuristicMatcher._verify_image_exists')
     def test_tier4_llm_verified_match(self, mock_tier3_verify, mock_tier4_verify, tmp_path, mock_dfc_yaml):
         """Test that verified LLM matches are accepted."""
         # Create DFC mappings

@@ -128,7 +128,7 @@ packages:
         dfc_mappings.cache_file = cache_file
         assert dfc_mappings._cache_needs_refresh() is False
 
-    @patch('integrations.dfc_mappings.requests.get')
+    @patch('forge_gauge.integrations.dfc_mappings.requests.get')
     def test_fetch_and_cache(self, mock_get, dfc_mappings, mock_dfc_yaml):
         """Test fetching mappings from remote and caching."""
         # Mock successful response
@@ -146,7 +146,7 @@ packages:
         assert dfc_mappings.cache_file.exists()
         assert mock_dfc_yaml in dfc_mappings.cache_file.read_text()
 
-    @patch('integrations.dfc_mappings.requests.get')
+    @patch('forge_gauge.integrations.dfc_mappings.requests.get')
     def test_fetch_and_cache_network_error(self, mock_get, dfc_mappings):
         """Test handling of network errors during fetch."""
         import requests

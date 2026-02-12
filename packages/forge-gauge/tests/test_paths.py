@@ -21,13 +21,13 @@ class TestNonFrozenPaths:
     """Tests for path resolution in git-clone mode."""
 
     def test_get_repo_root_points_to_repo(self):
-        """Repo root should contain setup.py and src/."""
+        """Repo root should contain pyproject.toml and src/."""
         root = _get_repo_root()
-        assert (root / "setup.py").exists()
+        assert (root / "pyproject.toml").exists()
         assert (root / "src").is_dir()
 
     def test_is_repo_install_true_in_git_clone(self):
-        """_is_repo_install() should return True when setup.py exists."""
+        """_is_repo_install() should return True when pyproject.toml exists."""
         assert _is_repo_install() is True
 
     def test_get_config_path_resolves_to_repo_config(self):
@@ -52,10 +52,10 @@ class TestWheelInstallPaths:
     """Tests for path resolution in wheel-installed mode."""
 
     def test_config_path_falls_back_to_gauge_home(self, tmp_path):
-        """When setup.py doesn't exist, config should fall back to ~/.gauge/config/."""
+        """When pyproject.toml doesn't exist, config should fall back to ~/.gauge/config/."""
         fake_home = tmp_path / ".gauge"
-        with patch("utils.paths._is_repo_install", return_value=False), \
-             patch("utils.paths.GAUGE_HOME", fake_home):
+        with patch("forge_gauge.utils.paths._is_repo_install", return_value=False), \
+             patch("forge_gauge.utils.paths.GAUGE_HOME", fake_home):
             path = get_config_path("image_mappings.yaml")
             assert path == fake_home / "config" / "image_mappings.yaml"
             # Directory should be created

@@ -138,7 +138,7 @@ class TestCalculateBacklogCost:
 class TestEstimateMonthlyNewCves:
     """Tests for monthly CVE estimation."""
 
-    @patch("utils.roi_calculator.get_cve_monthly_ratios")
+    @patch("forge_gauge.utils.roi_calculator.get_cve_monthly_ratios")
     def test_estimate_monthly_new_cves(self, mock_ratios, calculator, sample_analysis):
         """Per-image monthly CVE estimate."""
         mock_ratios.return_value = MOCK_CVE_RATIOS
@@ -148,7 +148,7 @@ class TestEstimateMonthlyNewCves:
         # (5 + 20 + 40 + 25 + 10) * 0.1 = 10 new CVEs per month
         assert monthly_cves == 10.0
 
-    @patch("utils.roi_calculator.get_cve_monthly_ratios")
+    @patch("forge_gauge.utils.roi_calculator.get_cve_monthly_ratios")
     def test_estimate_monthly_new_cves_zero_vulns(
         self, mock_ratios, calculator, zero_vuln_analysis
     ):
@@ -163,7 +163,7 @@ class TestEstimateMonthlyNewCves:
 class TestCalculateOngoingCost:
     """Tests for ongoing cost calculations."""
 
-    @patch("utils.roi_calculator.get_cve_monthly_ratios")
+    @patch("forge_gauge.utils.roi_calculator.get_cve_monthly_ratios")
     def test_calculate_ongoing_cost(self, mock_ratios, calculator, sample_analysis):
         """Monthly/yearly projections."""
         mock_ratios.return_value = MOCK_CVE_RATIOS
@@ -181,7 +181,7 @@ class TestCalculateOngoingCost:
         # $3,000 * 12 = $36,000/year
         assert yearly_cost == 36000.0
 
-    @patch("utils.roi_calculator.get_cve_monthly_ratios")
+    @patch("forge_gauge.utils.roi_calculator.get_cve_monthly_ratios")
     def test_calculate_ongoing_cost_multiple_images(
         self, mock_ratios, calculator, sample_analysis, sample_analysis_small
     ):
@@ -202,7 +202,7 @@ class TestCalculateOngoingCost:
 class TestCalculateFullRoi:
     """Tests for complete ROI calculation."""
 
-    @patch("utils.roi_calculator.get_cve_monthly_ratios")
+    @patch("forge_gauge.utils.roi_calculator.get_cve_monthly_ratios")
     def test_calculate_full_roi(self, mock_ratios, calculator, sample_analysis):
         """Complete ROI metrics."""
         mock_ratios.return_value = MOCK_CVE_RATIOS
@@ -222,7 +222,7 @@ class TestCalculateFullRoi:
         # Total: backlog + yearly = $66,000
         assert roi.total_cost == 66000.0
 
-    @patch("utils.roi_calculator.get_cve_monthly_ratios")
+    @patch("forge_gauge.utils.roi_calculator.get_cve_monthly_ratios")
     def test_calculate_full_roi_empty(self, mock_ratios, calculator):
         """ROI with empty list."""
         mock_ratios.return_value = MOCK_CVE_RATIOS
@@ -296,7 +296,7 @@ class TestCustomRates:
         # 500 hours * $150/hour = $75,000
         assert cost == 75000.0
 
-    @patch("utils.roi_calculator.get_cve_monthly_ratios")
+    @patch("forge_gauge.utils.roi_calculator.get_cve_monthly_ratios")
     def test_custom_rates_ongoing(self, mock_ratios, custom_calculator, sample_analysis):
         """Custom rates apply to ongoing costs."""
         mock_ratios.return_value = MOCK_CVE_RATIOS

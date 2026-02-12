@@ -1,0 +1,107 @@
+# Manual Image Mappings
+# Last updated: 2026-02-02T15:13:17.732026
+# Total mappings: 51
+#
+# Format: "source:tag": "cgr.dev/chainguard[-private]/image:tag"
+#
+# Auto-populated from successful matches:
+#   amazon/aws-cli → cgr.dev/chainguard-private/aws-cli:latest (heuristic, 85%)
+#   apache/activemq-artemis → cgr.dev/chainguard-private/apache-activemq-artemis:latest (heuristic, 85%)
+#   bitnamilegacy/kafka → cgr.dev/chainguard-private/kafka-iamguarded:latest (heuristic, 85%)
+#   bitnamilegacy/keycloak → cgr.dev/chainguard-private/keycloak-iamguarded:latest (heuristic, 85%)
+#   bitnamilegacy/keycloak-config-cli → cgr.dev/chainguard-private/keycloak-config-cli-iamguarded:latest (heuristic, 85%)
+#   bitnamilegacy/kubectl → cgr.dev/chainguard-private/kubectl-iamguarded:latest (heuristic, 85%)
+#   bitnamilegacy/os-shell → cgr.dev/chainguard-private/os-shell-iamguarded:latest (heuristic, 85%)
+#   bitnamilegacy/pgpool → cgr.dev/chainguard-private/pgpool2:latest (llm, 95%)
+#   bitnamilegacy/postgres-exporter → cgr.dev/chainguard-private/prometheus-postgres-exporter:latest (llm, 95%)
+#   bitnamilegacy/postgresql-repmgr → cgr.dev/chainguard-private/postgres-repmgr-iamguarded:latest (llm, 95%)
+#   bitnamilegacy/sealed-secrets-controller → cgr.dev/chainguard-private/sealed-secrets-controller-iamguarded:latest (heuristic, 85%)
+#   busybox → cgr.dev/chainguard-private/chainguard-base:latest (heuristic, 85%)
+#   crossplane/crossplane:v1.18.2 → cgr.dev/chainguard-private/crossplane:latest (heuristic, 85%)
+#   dexidp/dex → cgr.dev/chainguard-private/dex:latest (heuristic, 85%)
+#   docker.elastic.co/beats/filebeat:8.17.0 → cgr.dev/chainguard-private/filebeat:latest (heuristic, 85%)
+#   docker.elastic.co/eck/eck-operator → cgr.dev/chainguard-private/eck-operator:latest (heuristic, 85%)
+#   docker.elastic.co/elasticsearch/elasticsearch:8.17.0 → cgr.dev/chainguard-private/elasticsearch:latest (heuristic, 85%)
+#   docker.elastic.co/kibana/kibana:8.17.0 → cgr.dev/chainguard-private/kibana:latest (heuristic, 85%)
+#   docker.elastic.co/logstash/logstash:8.17.0 → cgr.dev/chainguard-private/logstash:latest (heuristic, 85%)
+#   ghcr.io/kafbat/kafka-ui → cgr.dev/chainguard-private/kafbat-ui:latest (llm, 95%)
+#   ghcr.io/kyverno/background-controller → cgr.dev/chainguard-private/kyverno-background-controller:latest (heuristic, 85%)
+#   ghcr.io/kyverno/cleanup-controller → cgr.dev/chainguard-private/kyverno-cleanup-controller:latest (heuristic, 85%)
+#   ghcr.io/kyverno/kyverno → cgr.dev/chainguard-private/kyverno:latest (heuristic, 85%)
+#   ghcr.io/kyverno/kyvernopre → cgr.dev/chainguard-private/kyvernopre:latest (heuristic, 85%)
+#   ghcr.io/kyverno/reports-controller → cgr.dev/chainguard-private/kyverno-reports-controller:latest (heuristic, 85%)
+#   mcr.microsoft.com/dotnet/aspnet → cgr.dev/chainguard-private/aspnet-runtime:latest (llm, 95%)
+#   mcr.microsoft.com/dotnet/runtime → cgr.dev/chainguard-private/dotnet-runtime:latest (heuristic, 85%)
+#   nginx → cgr.dev/chainguard-private/nginx:latest (heuristic, 85%)
+#   public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver:v1.38.1 → cgr.dev/chainguard-private/aws-ebs-csi-driver:latest (heuristic, 85%)
+#   quay.io/argoproj/argocd → cgr.dev/chainguard-private/argocd:latest (heuristic, 85%)
+#   quay.io/argoproj/argocli → cgr.dev/chainguard-private/argo-cli:latest (llm, 95%)
+#   quay.io/argoproj/argoexec → cgr.dev/chainguard-private/argo-exec:latest (llm, 95%)
+#   quay.io/argoproj/workflow-controller → cgr.dev/chainguard-private/argo-workflowcontroller:latest (llm, 95%)
+#   quay.io/backube/volsync → cgr.dev/chainguard-private/volsync:latest (heuristic, 85%)
+#   quay.io/brancz/kube-rbac-proxy:v0.18.2 → cgr.dev/chainguard-private/kube-rbac-proxy:latest (heuristic, 85%)
+#   quay.io/oauth2-proxy/oauth2-proxy → cgr.dev/chainguard-private/oauth2-proxy:latest (heuristic, 85%)
+#   quay.io/strimzi/kafka:0.45.0-kafka-3.9.0 → cgr.dev/chainguard-private/strimzi-kafka:latest (heuristic, 85%)
+#   quay.io/strimzi/operator → cgr.dev/chainguard-private/strimzi-kafka-operator:latest (llm, 95%)
+#   redhat/ubi9 → cgr.dev/chainguard-private/chainguard-base:latest (heuristic, 85%)
+#   registry.k8s.io/sig-storage/csi-attacher:v4.8.0 → cgr.dev/chainguard-private/kubernetes-csi-external-attacher:latest (llm, 95%)
+#   registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0 → cgr.dev/chainguard-private/kubernetes-csi-node-driver-registrar:latest (llm, 95%)
+#   registry.k8s.io/sig-storage/csi-provisioner:v5.1.0 → cgr.dev/chainguard-private/kubernetes-csi-external-provisioner:latest (llm, 95%)
+#   registry.k8s.io/sig-storage/csi-resizer:v1.12.0 → cgr.dev/chainguard-private/kubernetes-csi-external-resizer:latest (llm, 95%)
+#   registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0 → cgr.dev/chainguard-private/kubernetes-csi-external-snapshotter:latest (llm, 95%)
+#   registry.k8s.io/sig-storage/livenessprobe:v2.14.0 → cgr.dev/chainguard-private/kubernetes-csi-livenessprobe:latest (llm, 95%)
+#   registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2 → cgr.dev/chainguard-private/nfs-subdir-external-provisioner:latest (heuristic, 85%)
+#   registry.k8s.io/sig-storage/snapshot-controller:v8.2.0 → cgr.dev/chainguard-private/kubernetes-csi-external-snapshot-controller:latest (llm, 95%)
+#
+
+amazon/aws-cli: cgr.dev/chainguard-private/aws-cli:latest
+apache/activemq-artemis: cgr.dev/chainguard-private/apache-activemq-artemis:latest
+bitnamilegacy/kafka: cgr.dev/chainguard-private/kafka-iamguarded:latest
+bitnamilegacy/keycloak: cgr.dev/chainguard-private/keycloak-iamguarded:latest
+bitnamilegacy/keycloak-config-cli: cgr.dev/chainguard-private/keycloak-config-cli-iamguarded:latest
+bitnamilegacy/kubectl: cgr.dev/chainguard-private/kubectl-iamguarded:latest
+bitnamilegacy/os-shell: cgr.dev/chainguard-private/os-shell-iamguarded:latest
+bitnamilegacy/pgpool: cgr.dev/chainguard-private/pgpool2:latest
+bitnamilegacy/postgres-exporter: cgr.dev/chainguard-private/prometheus-postgres-exporter:latest
+bitnamilegacy/postgresql-repmgr: cgr.dev/chainguard-private/postgres-repmgr-iamguarded:latest
+bitnamilegacy/sealed-secrets-controller: cgr.dev/chainguard-private/sealed-secrets-controller-iamguarded:latest
+busybox: cgr.dev/chainguard-private/chainguard-base:latest
+crossplane/crossplane:v1.18.2: cgr.dev/chainguard-private/crossplane:latest
+dexidp/dex: cgr.dev/chainguard-private/dex:latest
+docker.elastic.co/beats/filebeat:8.17.0: cgr.dev/chainguard-private/filebeat:latest
+docker.elastic.co/eck/eck-operator: cgr.dev/chainguard-private/eck-operator:latest
+docker.elastic.co/elasticsearch/elasticsearch:8.17.0: cgr.dev/chainguard-private/elasticsearch:latest
+docker.elastic.co/kibana/kibana:8.17.0: cgr.dev/chainguard-private/kibana:latest
+docker.elastic.co/logstash/logstash:8.17.0: cgr.dev/chainguard-private/logstash:latest
+ghcr.io/kafbat/kafka-ui: cgr.dev/chainguard-private/kafbat-ui:latest
+ghcr.io/kyverno/background-controller: cgr.dev/chainguard-private/kyverno-background-controller:latest
+ghcr.io/kyverno/cleanup-controller: cgr.dev/chainguard-private/kyverno-cleanup-controller:latest
+ghcr.io/kyverno/kyverno: cgr.dev/chainguard-private/kyverno:latest
+ghcr.io/kyverno/kyvernopre: cgr.dev/chainguard-private/kyvernopre:latest
+ghcr.io/kyverno/reports-controller: cgr.dev/chainguard-private/kyverno-reports-controller:latest
+mcr.microsoft.com/dotnet/aspnet: cgr.dev/chainguard-private/aspnet-runtime:latest
+mcr.microsoft.com/dotnet/runtime: cgr.dev/chainguard-private/dotnet-runtime:latest
+mcr.microsoft.com/oss/kubernetes/azure-cloud-node-manager: cgr.dev/chainguard-private/cloud-provider-azure-node-manager:latest
+nginx: cgr.dev/chainguard-private/nginx:latest
+public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver:v1.38.1: cgr.dev/chainguard-private/aws-ebs-csi-driver:latest
+public.ecr.aws/eks/aws-load-balancer-controller: cgr.dev/chainguard-private/aws-load-balancer-controller:latest
+python: cgr.dev/chainguard-private/python:latest
+quay.io/argoproj/argocd: cgr.dev/chainguard-private/argocd:latest
+quay.io/argoproj/argocli: cgr.dev/chainguard-private/argo-cli:latest
+quay.io/argoproj/argoexec: cgr.dev/chainguard-private/argo-exec:latest
+quay.io/argoproj/workflow-controller: cgr.dev/chainguard-private/argo-workflowcontroller:latest
+quay.io/backube/volsync: cgr.dev/chainguard-private/volsync:latest
+quay.io/brancz/kube-rbac-proxy:v0.18.2: cgr.dev/chainguard-private/kube-rbac-proxy:latest
+quay.io/oauth2-proxy/oauth2-proxy: cgr.dev/chainguard-private/oauth2-proxy:latest
+quay.io/prometheus-operator/prometheus-config-reloader:main: cgr.dev/chainguard-private/prometheus-config-reloader:latest
+quay.io/strimzi/kafka:0.45.0-kafka-3.9.0: cgr.dev/chainguard-private/strimzi-kafka:latest
+quay.io/strimzi/operator: cgr.dev/chainguard-private/strimzi-kafka-operator:latest
+redhat/ubi9: cgr.dev/chainguard-private/chainguard-base:latest
+registry.k8s.io/sig-storage/csi-attacher:v4.8.0: cgr.dev/chainguard-private/kubernetes-csi-external-attacher:latest
+registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0: cgr.dev/chainguard-private/kubernetes-csi-node-driver-registrar:latest
+registry.k8s.io/sig-storage/csi-provisioner:v5.1.0: cgr.dev/chainguard-private/kubernetes-csi-external-provisioner:latest
+registry.k8s.io/sig-storage/csi-resizer:v1.12.0: cgr.dev/chainguard-private/kubernetes-csi-external-resizer:latest
+registry.k8s.io/sig-storage/csi-snapshotter:v8.2.0: cgr.dev/chainguard-private/kubernetes-csi-external-snapshotter:latest
+registry.k8s.io/sig-storage/livenessprobe:v2.14.0: cgr.dev/chainguard-private/kubernetes-csi-livenessprobe:latest
+registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2: cgr.dev/chainguard-private/nfs-subdir-external-provisioner:latest
+registry.k8s.io/sig-storage/snapshot-controller:v8.2.0: cgr.dev/chainguard-private/kubernetes-csi-external-snapshot-controller:latest

@@ -45,7 +45,7 @@ class TestGitHubIssueSearchClientAuth:
         assert client.headers["Authorization"] == "token explicit_token"
 
     @patch.dict("os.environ", {"GITHUB_TOKEN": "env_token"})
-    @patch("integrations.github_issue_search.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_issue_search.get_github_token_from_gh_cli")
     def test_env_var_token_second_priority(self, mock_gh_cli):
         """Test that env var token is used if no explicit token."""
         mock_gh_cli.return_value = "cli_token"
@@ -55,7 +55,7 @@ class TestGitHubIssueSearchClientAuth:
         assert client.token == "env_token"
 
     @patch.dict("os.environ", {}, clear=True)
-    @patch("integrations.github_issue_search.get_github_token_from_gh_cli")
+    @patch("forge_gauge.integrations.github_issue_search.get_github_token_from_gh_cli")
     def test_no_token_raises_error(self, mock_gh_cli):
         """Test that ValueError is raised when no token is available."""
         mock_gh_cli.return_value = None

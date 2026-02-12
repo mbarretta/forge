@@ -1,0 +1,41 @@
+# Upstream Image Mappings
+#
+# Manual overrides for mapping private/internal images to their public upstream equivalents.
+# This file is used by the upstream discovery feature (enabled by default) to discover
+# public versions of private or internal container images before matching to Chainguard.
+#
+# Format:
+#   "private-image:tag": "public-upstream-image:tag"
+#
+# Examples:
+#
+# Map internal Python app to public Python base image
+"company-internal.io/python-app:v1.0": "python:3.12"
+
+# Map private registry image to DockerHub equivalent
+"myregistry.io/nginx-custom:prod": "nginx:1.25"
+
+# Map internal name to public Bitnami image
+"internal-postgres-db:latest": "bitnami/postgresql:16"
+
+# Map custom build to upstream source
+"gcr.io/myproject/redis-custom:v2": "redis:7.0"
+
+# Map ECR image to public equivalent
+"123456789.dkr.ecr.us-east-1.amazonaws.com/app-golang:latest": "golang:1.21"
+
+# Map Azure ACR image to Quay.io equivalent
+"mycompany.azurecr.io/kafka:prod": "quay.io/strimzi/kafka:latest"
+
+# ---
+# How to use:
+#
+# 1. Add your custom mappings above
+# 2. Run gauge match with --upstream-mappings-file flag:
+#
+#    gauge match --input images.txt \
+#                --output matched.csv \
+#                --upstream-mappings-file config/upstream_mappings.yaml
+#
+# 3. Manual mappings have 100% confidence and take precedence over automatic discovery
+# 4. To disable upstream discovery entirely, use --skip-public-repo-search

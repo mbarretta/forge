@@ -18,14 +18,15 @@ def _get_repo_root() -> Path:
     """Get the repository root directory.
 
     Works by navigating up from this file's location:
-    src/utils/paths.py -> src/utils -> src -> repo_root
+    src/forge_gauge/utils/paths.py -> utils -> forge_gauge -> src -> repo_root
     """
-    return Path(__file__).resolve().parent.parent.parent
+    return Path(__file__).resolve().parent.parent.parent.parent
 
 
 def _is_repo_install() -> bool:
     """Check if running from a git clone (vs pip-installed wheel)."""
-    return (_get_repo_root() / "setup.py").is_file()
+    # Check for pyproject.toml (FORGE uses pyproject.toml instead of setup.py)
+    return (_get_repo_root() / "pyproject.toml").is_file()
 
 
 def get_config_path(relative_path: str) -> Path:

@@ -1,0 +1,46 @@
+# LLM Matching Configuration
+# Settings for Claude-powered Tier 4 fuzzy image matching
+
+# Claude model to use for matching
+# Options:
+#   - claude-sonnet-4-5 (recommended - balanced speed/accuracy)
+#   - claude-opus-4-1 (highest accuracy, slower, more expensive)
+#   - claude-haiku-4-5 (fastest, cheapest, lower accuracy)
+model: "claude-sonnet-4-5"
+
+# Minimum confidence threshold for accepting LLM matches
+# Range: 0.0 - 1.0
+# Default: 0.7 (70%)
+confidence_threshold: 0.7
+
+# Enable/disable LLM matching
+# Can be overridden by --disable-llm-matching flag
+enabled: true
+
+# Cache settings
+cache:
+  # Enable caching of LLM responses to reduce API costs
+  enabled: true
+
+  # Cache directory (relative to user's home)
+  # Default: ~/.cache/gauge
+  directory: "~/.cache/gauge"
+
+# Telemetry settings
+telemetry:
+  # Enable logging of LLM match attempts for analytics
+  enabled: true
+
+  # Telemetry log file location
+  file: "~/.cache/gauge/llm_telemetry.jsonl"
+
+# API settings
+api:
+  # Anthropic API key (can also be set via ANTHROPIC_API_KEY env var)
+  # key: "sk-ant-..."  # Uncomment and add your key if not using env var
+
+  # Request timeout in seconds
+  timeout: 30
+
+  # Maximum retries for failed requests
+  max_retries: 3
