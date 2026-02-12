@@ -1,0 +1,1061 @@
+/* PDF-optimized styles with Chainguard branding */
+@page {
+    margin: 0.75in;
+    size: A4;
+}
+
+@page appendix {
+    margin: 0.75in 0.75in 0.75in 0.75in;
+    size: A4;
+    @top-center {
+        content: "Appendix";
+        font-size: 16px;
+        font-weight: 600;
+        color: #14003d;
+        border-bottom: 2px solid #7545fb;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
+}
+
+@media print {
+    body { -webkit-print-color-adjust: exact; color-adjust: exact; }
+    .navbar { display: none; }
+    .container { padding-top: 0; }
+
+    /* Enhanced table page breaking for new structure */
+    .image-table-container {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        box-shadow: 0 4px 8px rgba(20, 0, 61, 0.15);
+    }
+
+    .image-table-container table {
+        page-break-inside: auto;
+        border: 2px solid var(--cg-primary);
+    }
+
+    .image-table-container thead {
+        display: table-header-group;
+        page-break-after: avoid;
+    }
+
+    .image-table-container thead th {
+        border-bottom: 3px solid var(--cg-primary);
+    }
+
+    .image-comparison-row {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    .image-table-container tbody td {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Enhanced badge visibility in PDF */
+    .vuln-badge {
+        border: 1px solid currentColor !important;
+        box-shadow: none !important;
+        font-size: 10px !important;
+        padding: 1px 3px !important;
+        min-width: 16px !important;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .vuln-breakdown-container {
+        gap: 1px !important;
+        padding: 2px !important;
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+    }
+
+    /* Prevent orphaned text */
+    p, li {
+        orphans: 3;
+        widows: 3;
+    }
+
+    /* Improve severity table for PDF */
+    .summary-table {
+        page-break-inside: avoid;
+    }
+
+    .severity-count {
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .severity-indicator {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Chainguard Brand Colors */
+:root {
+    --cg-primary: #14003d;        /* Deep purple - primary text/backgrounds */
+    --cg-secondary: #3443f4;      /* Bright blue - secondary elements */
+    --cg-accent: #7545fb;         /* Purple accent - highlights */
+    --cg-success: #7af0fe;        /* Light cyan - success/positive */
+    --cg-light: #d0cfee;          /* Light purple - subtle backgrounds */
+    --cg-white: #ffffff;
+    --cg-black: #000000;
+    --cg-gray-light: #f8f9fc;
+    --cg-gray-medium: #e5e7f0;
+    --cg-gray-dark: #6b7280;
+}
+
+/* Base styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--cg-white);
+    color: var(--cg-primary);
+    margin: 0;
+    padding: 24px;
+    line-height: 1.6;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Typography */
+h1 {
+    color: var(--cg-white);
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    text-align: center;
+    letter-spacing: -0.025em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    color: var(--cg-primary);
+    font-size: 20px;
+    font-weight: 600;
+    margin: 32px 0 20px 0;
+    text-align: left;
+    border-bottom: 3px solid var(--cg-accent);
+    padding-bottom: 8px;
+    letter-spacing: -0.015em;
+}
+
+h3 {
+    color: var(--cg-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 24px 0 12px 0;
+    border-bottom: 1px solid var(--cg-light);
+    padding-bottom: 6px;
+}
+
+p {
+    margin: 12px 0;
+    line-height: 1.7;
+    color: var(--cg-primary);
+}
+
+/* Code styling */
+code {
+    background-color: var(--cg-gray-light);
+    color: var(--cg-secondary);
+    padding: 3px 6px;
+    border: 1px solid var(--cg-light);
+    border-radius: 4px;
+    font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Courier New", monospace;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Layout sections */
+.header-section {
+    text-align: center;
+    margin-bottom: 0;
+    border-bottom: 4px solid var(--cg-accent);
+    padding: 20px 32px 20px 32px;
+    background: #14003d;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px -2px rgba(20, 0, 61, 0.15);
+    position: relative;
+    color: var(--cg-white);
+}
+
+.header-logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 60px;
+    height: auto;
+    max-height: 45px;
+}
+
+.header-section p {
+    font-size: 14px;
+    color: var(--cg-light);
+    margin-top: 8px;
+    font-weight: 400;
+    opacity: 0.95;
+}
+
+.overview-grid {
+    display: table;
+    width: 100%;
+    margin-bottom: 40px;
+    border-spacing: 20px;
+    table-layout: fixed;
+}
+
+.summary-column {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+    padding: 0;
+}
+
+.summary-column-content {
+    background: var(--cg-white);
+    border: 2px solid var(--cg-light);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(20, 0, 61, 0.08);
+    min-height: 400px;
+}
+
+.summary-column h2 {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 24px;
+    color: var(--cg-primary);
+}
+
+/* Total boxes with enhanced Chainguard styling */
+.total-box {
+    padding: 24px;
+    border: 2px solid var(--cg-light);
+    text-align: center;
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    background: var(--cg-white);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(20, 0, 61, 0.08);
+    flex-shrink: 0;
+}
+
+.total-box span {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.customer-total {
+    background: linear-gradient(135deg, #f8f9fc 0%, #e5e7f0 100%);
+    border-color: #d0cfee;
+    color: #14003d;
+}
+
+.chainguard-total {
+    background: linear-gradient(135deg, #7af0fe 0%, #a7f3d0 100%);
+    border-color: #7af0fe;
+    color: var(--cg-primary);
+}
+
+.reduction-box {
+    background: linear-gradient(135deg, var(--cg-success) 0%, #a7f3d0 100%);
+    border-color: #7af0fe;
+    color: var(--cg-primary);
+    font-size: 40px;
+}
+
+/* Summary table styling */
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(20, 0, 61, 0.08);
+}
+
+.summary-table th,
+.summary-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--cg-light);
+    font-size: 13px;
+}
+
+.summary-table th {
+    background: var(--cg-primary);
+    color: var(--cg-white);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 11px;
+}
+
+.summary-table tbody tr:nth-child(even) {
+    background-color: var(--cg-gray-light);
+}
+
+.severity-count {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--cg-primary);
+}
+
+.severity-indicator {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Severity indicator colors with new color scheme */
+.severity-indicator.critical {
+    background: #f2e4f8;
+    color: #82349d;
+    border: 1px solid #c08ad5;
+}
+.severity-indicator.high {
+    background: #fbe7e8;
+    color: #98362e;
+    border: 1px solid #ee7f78;
+}
+.severity-indicator.medium {
+    background: #fcebcc;
+    color: #a1531e;
+    border: 1px solid #f3ad56;
+}
+.severity-indicator.low {
+    background: #fefad3;
+    color: #76651d;
+    border: 1px solid #f7d959;
+}
+.severity-indicator.negligible {
+    background: #e8ecef;
+    color: #4d5b6a;
+    border: 1px solid #b8c2ca;
+}
+
+/* Enhanced sections */
+.image-comparison-section {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    padding: 20px;
+    border: 2px solid var(--cg-light);
+    background: var(--cg-white);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(20, 0, 61, 0.08);
+    page-break-inside: avoid;
+    page-break-before: avoid;
+}
+
+/* CVE Reduction section should start on new page */
+.cve-reduction-section {
+    page-break-before: always;
+}
+
+/* Images Scanned section - keep everything together */
+.images-scanned-section {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    padding: 20px;
+    border: 2px solid var(--cg-light);
+    background: var(--cg-white);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(20, 0, 61, 0.08);
+    page-break-inside: avoid;
+}
+
+.images-scanned-section h2 {
+    page-break-after: avoid;
+}
+
+.image-comparison-section h2 {
+    margin-top: 0;
+    color: var(--cg-primary);
+    page-break-after: avoid;
+}
+
+/* Make first section directly adjacent to header */
+.header-section + .image-comparison-section {
+    margin-top: 0 !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+}
+
+/* Enhanced Professional table styling */
+.image-table-container {
+    width: 100%;
+    overflow: visible;
+    margin: 30px 0;
+    page-break-inside: avoid;
+    page-break-before: avoid;
+    break-inside: avoid;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px -4px rgba(20, 0, 61, 0.12);
+    background: var(--cg-white);
+}
+
+.image-table-container table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    table-layout: fixed;
+    page-break-inside: auto;
+    border: 2px solid var(--cg-light);
+}
+
+.image-table-container th,
+.image-table-container td {
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--cg-gray-medium);
+    text-align: left;
+    font-size: 12px;
+    vertical-align: middle;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    line-height: 1.5;
+}
+
+.image-table-container thead th {
+    background: var(--cg-primary);
+    color: var(--cg-white);
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    page-break-after: avoid;
+    border-bottom: 3px solid var(--cg-accent);
+}
+
+/* Set column widths via th elements for table-layout: fixed */
+.image-table-container thead th:nth-child(1),
+.image-table-container thead th:nth-child(3) {
+    width: 30%;
+}
+
+.image-table-container thead th:nth-child(2),
+.image-table-container thead th:nth-child(4) {
+    width: 20%;
+}
+
+.image-table-container tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: auto;
+    transition: background-color 0.2s ease;
+}
+
+.image-table-container tbody tr:nth-child(even) {
+    background-color: var(--cg-gray-light);
+}
+
+.image-table-container tbody tr:nth-child(odd) {
+    background-color: var(--cg-white);
+}
+
+.image-table-container tbody tr:hover {
+    background-color: rgba(116, 69, 251, 0.08);
+}
+
+/* Simplified table cell styling */
+.image-name {
+    font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Courier New", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--cg-primary);
+    background: rgba(255, 255, 255, 0.8);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--cg-light);
+}
+
+.image-name-cell {
+    width: 30%;
+}
+
+.vulnerability-count {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--cg-primary);
+    text-align: left;
+}
+
+/* Enhanced vulnerability breakdown styling for table cells */
+.vuln-breakdown-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 4px 2px;
+    line-height: 1.2;
+}
+
+.vuln-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 1px solid;
+    white-space: nowrap;
+    min-width: 20px;
+    justify-content: center;
+    line-height: 1;
+    margin-right: 2px;
+}
+
+/* Severity-specific badge colors with new color scheme */
+.vuln-critical {
+    background: #f2e4f8;
+    color: #82349d;
+    border-color: #c08ad5;
+}
+
+.vuln-high {
+    background: #fbe7e8;
+    color: #98362e;
+    border-color: #ee7f78;
+}
+
+.vuln-medium {
+    background: #fcebcc;
+    color: #a1531e;
+    border-color: #f3ad56;
+}
+
+.vuln-low {
+    background: #fefad3;
+    color: #76651d;
+    border-color: #f7d959;
+}
+
+.vuln-negligible {
+    background: #e8ecef;
+    color: #4d5b6a;
+    border-color: #b8c2ca;
+}
+
+.vuln-kev {
+    background: #ffe5e5;
+    color: #c41e3a;
+    border-color: #ff6b6b;
+    font-weight: bold;
+}
+
+/* KEV Table Styling */
+.kev-table table {
+    font-size: 0.9em;
+}
+
+/* KEV table has 6 columns, so needs different width distribution */
+.kev-table thead th:nth-child(1) {
+    width: 28% !important;  /* Image column - needs space for long names */
+}
+
+.kev-table thead th:nth-child(2) {
+    width: 13% !important;  /* CVE ID */
+}
+
+.kev-table thead th:nth-child(3) {
+    width: 27% !important;  /* Vulnerability Name - needs more space */
+}
+
+.kev-table thead th:nth-child(4) {
+    width: 10% !important;  /* Vendor - can be smaller */
+}
+
+.kev-table thead th:nth-child(5) {
+    width: 10% !important;  /* Product - can be smaller */
+}
+
+.kev-table thead th:nth-child(6) {
+    width: 12% !important;  /* Date */
+}
+
+.kev-table th {
+    background: #c41e3a;
+    color: white;
+}
+
+.kev-table tbody tr:hover {
+    background: #fff9f9;
+}
+
+.kev-link {
+    color: #c41e3a;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.kev-link:hover {
+    text-decoration: underline;
+    color: #a01828;
+}
+
+.vuln-clean {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #10b981;
+    font-weight: 700;
+}
+
+.chps-overall-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 1px solid;
+    white-space: nowrap;
+    min-width: 20px;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Vulnerability legend styling */
+.vulnerability-legend {
+    margin: 20px 0 30px 0;
+    padding: 16px 20px;
+    background: var(--cg-gray-light);
+    border: 2px solid var(--cg-light);
+    border-radius: 8px;
+    page-break-inside: avoid;
+    page-break-after: avoid;
+}
+
+.vulnerability-legend h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cg-primary);
+    border: none;
+    padding: 0;
+    text-align: left;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.legend-badge {
+    transform: scale(1.1);
+}
+
+.legend-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--cg-primary);
+}
+
+@media print {
+    .vulnerability-legend {
+        page-break-inside: avoid;
+        page-break-after: avoid;
+        break-inside: avoid;
+        break-after: avoid;
+        margin: 15px 0 20px 0;
+        padding: 12px 16px;
+    }
+
+    .legend-items {
+        gap: 12px;
+    }
+
+    .legend-item {
+        gap: 4px;
+    }
+
+    .legend-badge {
+        transform: scale(1.0);
+    }
+
+    .legend-label {
+        font-size: 11px;
+    }
+}
+
+/* Enhanced Appendix with better page break handling */
+.appendix-content {
+    text-align: left;
+    padding: 24px;
+    background: var(--cg-gray-light);
+    border-radius: 8px;
+    border: 2px solid var(--cg-light);
+    page-break-before: always;
+}
+
+.appendix-content h2 {
+    page-break-after: avoid;
+    margin-top: 0 !important;
+    margin-bottom: 20px;
+}
+
+.appendix-content h3 {
+    font-size: 16px;
+    margin-top: 28px;
+    color: var(--cg-primary);
+    border-bottom-color: var(--cg-accent);
+    page-break-after: avoid;
+    page-break-before: auto;
+}
+
+.appendix-content ul {
+    margin: 16px 0;
+    padding-left: 24px;
+    page-break-inside: auto;
+}
+
+.appendix-content li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+    font-size: 12px;
+    color: var(--cg-primary);
+    page-break-inside: avoid;
+}
+
+.appendix-content p {
+    orphans: 2;
+    widows: 2;
+    page-break-inside: auto;
+}
+
+.appendix-content strong {
+    color: var(--cg-accent);
+    font-weight: 600;
+}
+
+/* Appendix section grouping for better page breaks */
+.appendix-section {
+    page-break-inside: avoid;
+    margin-bottom: 32px;
+}
+
+.appendix-section:last-child {
+    margin-bottom: 0;
+}
+
+@media print {
+    .appendix-content {
+        page-break-before: always;
+        break-before: always;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        page: appendix;
+        page-break-inside: auto;
+        break-inside: auto;
+    }
+
+    .appendix-content h3 {
+        page-break-after: avoid;
+        break-after: avoid;
+        page-break-before: auto;
+        break-before: auto;
+    }
+
+    .appendix-content ul {
+        page-break-inside: auto;
+        break-inside: auto;
+    }
+
+    .appendix-content li {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        orphans: 2;
+        widows: 2;
+    }
+
+    .appendix-content p {
+        orphans: 2;
+        widows: 2;
+        page-break-inside: auto;
+        break-inside: auto;
+    }
+
+    .appendix-section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Strategic page break with continuation header */
+    .appendix-page-break {
+        page-break-before: always;
+        break-before: always;
+        margin-top: 0;
+        padding-top: 0;
+    }
+
+    .appendix-continuation {
+        color: var(--cg-primary);
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 20px 0 !important;
+        text-align: left;
+        border-bottom: 3px solid var(--cg-accent);
+        padding-bottom: 8px;
+        letter-spacing: -0.015em;
+        page-break-after: avoid;
+    }
+
+    /* Chrome PDF export specific footer behavior - now inside appendix */
+    .appendix-content .footer {
+        page-break-before: avoid;
+        break-before: avoid;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-top: 30px;
+        border-radius: 8px;
+        background: var(--cg-white);
+        border: 2px solid var(--cg-light);
+    }
+}
+
+/* Professional Footer */
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--cg-gray-dark);
+    border-top: 2px solid var(--cg-light);
+    background: var(--cg-gray-light);
+    border-radius: 0 0 8px 8px;
+    font-weight: 500;
+    page-break-before: avoid;
+    page-break-inside: avoid;
+}
+
+/* Utility classes */
+.no-break {
+    page-break-inside: avoid;
+}
+
+/* Additional professional touches */
+strong {
+    color: var(--cg-primary);
+    font-weight: 600;
+}
+
+em {
+    color: var(--cg-accent);
+    font-style: normal;
+    font-weight: 500;
+}
+
+/* ========================================================================
+   Pricing Quote Specific Styles
+   ======================================================================== */
+
+.pricing-section {
+    margin-top: 0;
+    padding: 30px;
+    border: 2px solid var(--cg-light);
+    background: var(--cg-white);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(20, 0, 61, 0.08);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--cg-gray-light);
+    border-radius: 8px;
+    border: 1px solid var(--cg-light);
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--cg-gray-dark);
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cg-primary);
+}
+
+.table-container {
+    width: 100%;
+    overflow: visible;
+    margin: 20px 0;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px -4px rgba(20, 0, 61, 0.12);
+    background: var(--cg-white);
+}
+
+.table-container table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid var(--cg-light);
+}
+
+.table-container th,
+.table-container td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--cg-gray-medium);
+    text-align: left;
+    font-size: 13px;
+}
+
+.table-container th {
+    background: var(--cg-primary);
+    color: var(--cg-white);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table-container th.number {
+    text-align: right;
+}
+
+.table-container td.number {
+    text-align: right;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-weight: 600;
+}
+
+.table-container tbody tr:nth-child(even) {
+    background-color: var(--cg-gray-light);
+}
+
+.table-container tbody tr:nth-child(odd) {
+    background-color: var(--cg-white);
+}
+
+.table-container tbody tr:hover {
+    background-color: rgba(116, 69, 251, 0.08);
+}
+
+/* Grand total row in pricing table */
+.grand-total-row {
+    background: linear-gradient(135deg, #7af0fe 0%, #a7f3d0 100%) !important;
+    border-top: 3px solid var(--cg-primary) !important;
+}
+
+.grand-total-row td {
+    padding: 16px !important;
+    font-size: 16px !important;
+    border-bottom: none !important;
+}
+
+.grand-total-row .total-label {
+    text-align: right;
+    color: var(--cg-primary);
+}
+
+.grand-total-row .total-amount {
+    color: var(--cg-primary);
+    font-size: 18px !important;
+}
+
+/* Tier colors */
+.tier-base {
+    color: var(--cg-secondary);
+    font-weight: 600;
+}
+
+.tier-application {
+    color: var(--cg-accent);
+    font-weight: 600;
+}
+
+.tier-fips {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.tier-ai {
+    color: #ea580c;
+    font-weight: 600;
+}
+
+.pricing-notes {
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--cg-gray-light);
+    border-left: 4px solid var(--cg-accent);
+    border-radius: 4px;
+}
+
+.pricing-notes p {
+    margin: 8px 0;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.pricing-notes strong {
+    color: var(--cg-primary);
+}
+
+@media print {
+    .pricing-section {
+        page-break-inside: avoid;
+    }
+
+    .table-container {
+        page-break-inside: avoid;
+    }
+
+    .grand-total-row {
+        page-break-before: avoid;
+    }
+}

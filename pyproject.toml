@@ -13,10 +13,10 @@ authors = [
 dependencies = [
     "forge-cli",
     "forge-hello",  # temporary test plugin
-    # TODO: Add real plugins:
-    # "forge-gauge",
+    "forge-gauge",
+    "forge-provenance",
+    # TODO: Add when created:
     # "forge-ils",
-    # "forge-provenance",
 ]
 
 [project.scripts]
@@ -26,6 +26,8 @@ forge = "forge_cli.main:main"
 forge-cli = { workspace = true }
 forge-hello = { workspace = true }
 forge-api = { workspace = true }
+forge-gauge = { workspace = true }
+forge-provenance = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -33,10 +35,10 @@ members = [
     "packages/forge-cli",
     "packages/forge-api",
     "packages/forge-hello",
+    "packages/forge-gauge",
+    "packages/forge-provenance",
     # TODO: Add when created:
-    # "packages/forge-gauge",
     # "packages/forge-ils",
-    # "packages/forge-provenance",
 ]
 
 [tool.uv]
