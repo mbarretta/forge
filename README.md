@@ -101,7 +101,7 @@ brew install grype
 ```bash
 forge gauge scan \
   --input nginx:latest \
-  --output html,xlsx \
+  --output vuln_summary,cost_analysis \
   --customer "Acme Corp"
 ```
 
@@ -109,7 +109,7 @@ forge gauge scan \
 ```bash
 forge gauge scan \
   --organization my-chainguard-org \
-  --output html,xlsx,yaml \
+  --output vuln_summary,cost_analysis \
   --with-all  # Enable CHPS, FIPS, KEVs
 ```
 
@@ -118,7 +118,7 @@ forge gauge scan \
 # Create images.csv with: image_name,image_tag
 forge gauge scan \
   --input images.csv \
-  --output html,xlsx \
+  --output vuln_summary,cost_analysis \
   --max-workers 4 \
   --cache-dir .cache
 ```
@@ -127,7 +127,7 @@ forge gauge scan \
 ```bash
 forge gauge match \
   --input images.csv \
-  --output matched-log.yaml \
+  --output-dir ./output \
   --min-confidence 0.7 \
   --interactive  # Enable manual matching for low-confidence results
 ```
@@ -136,7 +136,7 @@ forge gauge match \
 ```bash
 forge gauge scan \
   --input images.csv \
-  --output html,xlsx,yaml \
+  --output vuln_summary,cost_analysis,pricing:html \
   --customer "Acme Corp" \
   --pricing-policy pricing-policy.yaml \
   --exec-summary exec-summary.md \
@@ -154,7 +154,7 @@ forge gauge scan \
 - `<command>` - Required subcommand: `scan` or `match`
 - `--input` - Image reference, CSV file, or organization
 - `--organization` - Chainguard org to scan
-- `--output` - Output formats: `html`, `xlsx`, `yaml` (comma-separated)
+- `--output` - Output types: `vuln_summary` (HTML), `cost_analysis` (XLSX), `pricing`, `pricing:html`, `pricing:txt` (comma-separated)
 - `--customer` - Customer name for reports
 - `--max-workers` - Parallel workers (default: 1)
 - `--with-chps` - Include CHPS security scoring
@@ -254,7 +254,7 @@ curl -X POST http://localhost:8080/api/jobs \
     "args": {
       "command": "scan",
       "input": "nginx:latest",
-      "output": "html"
+      "output": "vuln_summary,cost_analysis"
     }
   }' | jq
 
@@ -480,10 +480,10 @@ For API usage, tokens can be provided via:
 - Multi-year ROI projections
 - Detailed CVE listings
 
-**YAML Export** (`*.yaml`):
-- Structured data for automation
-- Machine-readable results
-- Integration with CI/CD
+**Pricing Quote** (HTML/TXT):
+- Chainguard pricing estimates
+- Support and services quotes
+- Custom pricing based on policy file
 
 ### Provenance Outputs
 
@@ -507,7 +507,7 @@ FORGE can be used in CI/CD pipelines:
     uv tool install git+https://github.com/chainguard/forge
     forge gauge scan \
       --input production-images.csv \
-      --output yaml \
+      --output vuln_summary,cost_analysis \
       --output-dir ./reports
 
 - name: Upload scan results

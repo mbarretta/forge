@@ -63,12 +63,12 @@ class GaugePlugin:
             ),
             ToolParam(
                 name="output",
-                description="Output types (comma-separated, e.g. html,xlsx,yaml)",
+                description="Output types: vuln_summary (HTML), cost_analysis (XLSX), pricing, pricing:html, pricing:txt (comma-separated). Scan only.",
             ),
             ToolParam(
                 name="output-dir",
-                description="Output directory",
-                default=".",
+                description="Output directory for generated files",
+                default="output",
             ),
             ToolParam(
                 name="customer",
@@ -365,10 +365,13 @@ class GaugePlugin:
             ]
 
         try:
+            output_dir = Path(args.get("output-dir", "output"))
+            output_file = output_dir / "matched-log.yaml"
+
             matched_images, unmatched_images = match_images(
                 input_file=input_file,
-                output_file=Path(args.get("output", "output/matched-log.yaml")),
-                output_dir=Path(args.get("output-dir", "output")),
+                output_file=output_file,
+                output_dir=output_dir,
                 min_confidence=args.get("min-confidence", DEFAULT_MATCH_CONFIDENCE),
                 interactive=args.get("interactive", False),
                 dfc_mappings_file=args.get("dfc-mappings-file"),
@@ -397,7 +400,7 @@ class GaugePlugin:
                     "matched": len(matched_images),
                     "unmatched": len(unmatched_images),
                 },
-                artifacts={"match_log": str(Path(args.get("output", "output/matched-log.yaml")).resolve())},
+                artifacts={"match_log": str(output_file.resolve())},
             )
         except Exception as e:
             logger.exception("Match command failed")
