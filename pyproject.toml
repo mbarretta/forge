@@ -25,14 +25,15 @@ forge = "forge_cli.main:main"
 [tool.uv.sources]
 forge-cli = { workspace = true }
 forge-hello = { workspace = true }
+forge-api = { workspace = true }
 
 [tool.uv.workspace]
 members = [
     "packages/forge-core",
     "packages/forge-cli",
+    "packages/forge-api",
     "packages/forge-hello",
     # TODO: Add when created:
-    # "packages/forge-api",
     # "packages/forge-gauge",
     # "packages/forge-ils",
     # "packages/forge-provenance",
@@ -46,6 +47,7 @@ dev-dependencies = [
     "httpx>=0.27.0,<1.0.0",
     "ruff>=0.8.0",
     "mypy>=1.13.0",
+    "forge-api",
 ]
 
 [build-system]
