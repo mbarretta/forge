@@ -19,6 +19,17 @@ TYPE_MAP: dict[str, type] = {
 }
 
 
+def detect_subcommand(params: list[ToolParam]) -> ToolParam | None:
+    """Detect if a plugin uses subcommands.
+
+    Returns the "command" parameter if it exists and has choices, otherwise None.
+    """
+    for param in params:
+        if param.name == "command" and param.choices:
+            return param
+    return None
+
+
 def add_params_to_parser(parser, params: list[ToolParam]) -> None:
     """Add ToolParam declarations to an argparse.ArgumentParser.
 

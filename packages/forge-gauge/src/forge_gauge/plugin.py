@@ -38,12 +38,18 @@ class GaugePlugin:
     version = __version__
 
     def get_params(self) -> list[ToolParam]:
-        """Declare parameters for gauge commands."""
+        """Declare parameters for gauge commands.
+
+        The "command" parameter is treated as a positional subcommand by the CLI:
+        - forge gauge scan --input file.csv
+        - forge gauge match --input file.csv
+        - forge gauge update
+        """
         return [
-            # Command selection
+            # Subcommand selection (positional in CLI, not a --flag)
             ToolParam(
                 name="command",
-                description="Command to run",
+                description="Subcommand: scan, match, or update",
                 required=True,
                 choices=["scan", "match", "update"],
             ),

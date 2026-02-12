@@ -152,20 +152,62 @@ def main() -> None:
 
     plugin = plugins[command]
 
-    # Build argparse from plugin params
-    parser = argparse.ArgumentParser(
-        prog=f"forge {plugin.name}",
-        description=plugin.description,
-    )
+    from forge_cli.runner import add_params_to_parser, run_plugin, detect_subcommand
 
-    from forge_cli.runner import add_params_to_parser, run_plugin
+    # Check if plugin supports subcommands
+    params = plugin.get_params()
+    subcommand_param = detect_subcommand(params)
 
-    add_params_to_parser(parser, plugin.get_params())
+    if subcommand_param:
+        # Plugin uses subcommands (e.g., forge gauge scan)
+        if len(sys.argv) < 3 or sys.argv[2].startswith("-"):
+            # No subcommand provided or looks like a flag
+            print(f"Error: {plugin.name} requires a subcommand")
+            print(f"Available commands: {', '.join(subcommand_param.choices)}")
+            print(f"\nUsage: forge {plugin.name} <command> [options]")
+            sys.exit(1)
 
-    # Remove the tool name from argv so argparse sees only the tool's args
-    args = parser.parse_args(sys.argv[2:])
-    exit_code = run_plugin(plugin, vars(args))
-    sys.exit(exit_code)
+        subcommand = sys.argv[2]
+
+        # Validate subcommand
+        if subcommand_param.choices and subcommand not in subcommand_param.choices:
+            print(f"Unknown {plugin.name} command: {subcommand}")
+            print(f"Available commands: {', '.join(subcommand_param.choices)}")
+            sys.exit(1)
+
+        # Build parser without the command parameter (it's positional)
+        parser = argparse.ArgumentParser(
+            prog=f"forge {plugin.name} {subcommand}",
+            description=plugin.description,
+        )
+
+        # Add all params except the command param
+        other_params = [p for p in params if p.name != subcommand_param.name]
+        add_params_to_parser(parser, other_params)
+
+        # Parse args starting after the subcommand
+        args = parser.parse_args(sys.argv[3:])
+        args_dict = vars(args)
+
+        # Add the subcommand back to args
+        args_dict[subcommand_param.name] = subcommand
+
+        exit_code = run_plugin(plugin, args_dict)
+        sys.exit(exit_code)
+    else:
+        # Standard plugin without subcommands
+        # Usage: forge coverage --requirements-file file.txt
+        parser = argparse.ArgumentParser(
+            prog=f"forge {plugin.name}",
+            description=plugin.description,
+        )
+
+        add_params_to_parser(parser, params)
+
+        # Remove the tool name from argv so argparse sees only the tool's args
+        args = parser.parse_args(sys.argv[2:])
+        exit_code = run_plugin(plugin, vars(args))
+        sys.exit(exit_code)
 
 
 if __name__ == "__main__":
