@@ -1,6 +1,6 @@
 # FORGE
 
-**Chainguard Field Engineering Toolkit** — Unified platform for security assessment and container analysis tools.
+**Field Operations Resources for GTM Engineering**
 
 FORGE consolidates multiple field engineering tools into a single, consistent interface available as a CLI, REST API, and web UI.
 
