@@ -31,7 +31,7 @@ class GeneratorConfig:
         Raises:
             ValueError: If configuration is invalid
         """
-        from utils.validation import validate_customer_name
+        from forge_gauge.utils.validation import validate_customer_name
 
         self.customer_name = validate_customer_name(self.customer_name)
 
@@ -48,7 +48,7 @@ class HTMLGeneratorConfig(GeneratorConfig):
         """Validate HTML-specific configuration."""
         super().validate()
 
-        from utils.validation import validate_file_path
+        from forge_gauge.utils.validation import validate_file_path
 
         if self.exec_summary_path:
             self.exec_summary_path = validate_file_path(
@@ -76,7 +76,7 @@ class XLSXGeneratorConfig(GeneratorConfig):
         """Validate XLSX-specific configuration."""
         super().validate()
 
-        from utils.validation import validate_positive_number
+        from forge_gauge.utils.validation import validate_positive_number
 
         self.hours_per_vuln = validate_positive_number(
             self.hours_per_vuln,

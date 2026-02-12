@@ -431,10 +431,30 @@ class GaugePlugin:
         """Convert args dict to argparse Namespace for compatibility with gauge internals."""
         ns = argparse.Namespace()
 
+        # Parameters that should be Path objects
+        path_params = {
+            "output_dir", "pricing_policy", "exec_summary", "appendix",
+            "cache_dir", "checkpoint_file", "upstream_mappings_file",
+            "dfc_mappings_file", "gcr_credentials"
+        }
+
+        # Set defaults for gauge internal parameters not exposed in FORGE
+        ns.disable_mapping_auto_population = False
+        ns.verbose = False
+
         # Map all parameters
         for key, value in args.items():
             # Convert hyphenated names to underscored (argparse convention)
             attr_name = key.replace("-", "_")
+
+            # Handle parameter name mappings
+            if attr_name == "customer":
+                attr_name = "customer_name"
+
+            # Convert path strings to Path objects for compatibility
+            if attr_name in path_params and value is not None and isinstance(value, str):
+                value = Path(value)
+
             setattr(ns, attr_name, value)
 
         return ns

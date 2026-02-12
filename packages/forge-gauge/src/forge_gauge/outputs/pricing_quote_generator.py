@@ -157,7 +157,7 @@ class PricingQuoteGenerator:
 """)
 
         # Header section with logo (embedded as base64 for portability)
-        from outputs.html_generator import _get_logo_data_uri
+        from forge_gauge.outputs.html_generator import _get_logo_data_uri
 
         logo_data_uri = _get_logo_data_uri()
         html_parts.append('        <div class="header-section">')
@@ -322,6 +322,6 @@ class PricingQuoteGenerator:
 
     def _get_pricing_css(self) -> str:
         """Get CSS content for pricing quotes."""
-        from outputs.html_generator import load_embedded_css
+        from forge_gauge.outputs.html_generator import load_embedded_css
 
         return load_embedded_css()

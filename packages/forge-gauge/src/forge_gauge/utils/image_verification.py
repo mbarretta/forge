@@ -181,7 +181,7 @@ class ImageVerificationService:
         logger.debug(f"Falling back to Docker verification for {image}")
 
         # Import here to avoid circular dependency
-        from utils.docker_utils import image_exists_in_registry
+        from forge_gauge.utils.docker_utils import image_exists_in_registry
 
         try:
             exists = image_exists_in_registry(image)

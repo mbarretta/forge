@@ -66,8 +66,8 @@ class XLSXGenerator(OutputGenerator):
             output_path: Output file path
             config: XLSX generator configuration
         """
-        from core.exceptions import OutputException
-        from outputs.config import XLSXGeneratorConfig
+        from forge_gauge.core.exceptions import OutputException
+        from forge_gauge.outputs.config import XLSXGeneratorConfig
 
         # Validate config
         if not isinstance(config, XLSXGeneratorConfig):

@@ -71,7 +71,7 @@ class OrganizationImageLoader:
     def github_client(self):
         """Lazy-load the GitHub metadata client."""
         if self._github_client is None:
-            from integrations.github_metadata import GitHubMetadataClient
+            from forge_gauge.integrations.github_metadata import GitHubMetadataClient
             self._github_client = GitHubMetadataClient(github_token=self.github_token)
         return self._github_client
 

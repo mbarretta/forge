@@ -179,7 +179,7 @@ class GaugeOrchestrator:
         is_org_mode = hasattr(self.args, 'organization') and self.args.organization is not None
 
         if is_org_mode:
-            from integrations.organization_loader import (
+            from forge_gauge.integrations.organization_loader import (
                 is_support_identity,
                 has_org_pull_access,
                 get_support_identity_id,
@@ -270,7 +270,7 @@ class GaugeOrchestrator:
     def _restore_identity_if_needed(self) -> None:
         """Restore normal identity if we logged in as support."""
         if self._logged_in_as_support:
-            from integrations.organization_loader import restore_normal_identity
+            from forge_gauge.integrations.organization_loader import restore_normal_identity
             print_header("Restoring normal identity...")
             print()
             if restore_normal_identity():
@@ -281,7 +281,7 @@ class GaugeOrchestrator:
 
     def _ensure_gcr_auth_if_needed(self):
         """Configure GCR auth if any input images are from gcr.io."""
-        from utils.gcr_auth import GCRAuthenticator
+        from forge_gauge.utils.gcr_auth import GCRAuthenticator
 
         # Collect all images from pairs
         all_images = [p.alternative_image for p in self.pairs] + \
@@ -309,7 +309,7 @@ class GaugeOrchestrator:
 
     def _load_image_pairs(self) -> list[ImagePair]:
         """Load image pairs from CSV file, single image, or organization."""
-        from utils.validation import looks_like_image_reference
+        from forge_gauge.utils.validation import looks_like_image_reference
 
         # Validate mutual exclusivity of input sources
         has_input = hasattr(self.args, 'input') and self.args.input is not None
@@ -345,7 +345,7 @@ class GaugeOrchestrator:
         """Load image pairs from a Chainguard organization."""
         logger.info(f"Loading images from organization: {self.args.organization}")
 
-        from integrations.organization_loader import OrganizationImageLoader
+        from forge_gauge.integrations.organization_loader import OrganizationImageLoader
 
         loader = OrganizationImageLoader(
             organization=self.args.organization,
@@ -409,8 +409,8 @@ class GaugeOrchestrator:
         Returns:
             List containing a single ImagePair (after auto-matching)
         """
-        from core.exceptions import ValidationException
-        from utils.validation import validate_image_reference
+        from forge_gauge.core.exceptions import ValidationException
+        from forge_gauge.utils.validation import validate_image_reference
 
         # Validate the image reference
         try:
@@ -446,8 +446,8 @@ class GaugeOrchestrator:
 
     def _parse_two_column_csv(self, csv_path: Path) -> list[ImagePair]:
         """Parse two-column CSV format."""
-        from core.exceptions import ValidationException
-        from utils.validation import validate_image_reference
+        from forge_gauge.core.exceptions import ValidationException
+        from forge_gauge.utils.validation import validate_image_reference
         pairs = []
         with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.reader(f)
@@ -477,8 +477,8 @@ class GaugeOrchestrator:
 
     def _parse_single_column_csv(self, csv_path: Path) -> list[str]:
         """Parse single-column CSV format."""
-        from core.exceptions import ValidationException
-        from utils.validation import validate_image_reference
+        from forge_gauge.core.exceptions import ValidationException
+        from forge_gauge.utils.validation import validate_image_reference
         images = []
         with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.reader(f)
@@ -499,9 +499,9 @@ class GaugeOrchestrator:
 
     def _initialize_image_matcher(self):
         """Initialize ImageMatcher with all dependencies."""
-        from utils.image_matcher import ImageMatcher
-        from utils.registry_access import RegistryAccessChecker
-        from utils.upstream_finder import UpstreamImageFinder
+        from forge_gauge.utils.image_matcher import ImageMatcher
+        from forge_gauge.utils.registry_access import RegistryAccessChecker
+        from forge_gauge.utils.upstream_finder import UpstreamImageFinder
 
         # Initialize registry access checker to skip upstream discovery for public registries
         registry_checker = RegistryAccessChecker()
@@ -515,7 +515,7 @@ class GaugeOrchestrator:
             )
         llm_matcher = None
         if not self.args.disable_llm_matching:
-            from utils.llm_matcher import LLMMatcher
+            from forge_gauge.utils.llm_matcher import LLMMatcher
             logger.info(f"LLM matching enabled (model: {self.args.llm_model}, threshold: {self.args.llm_confidence_threshold:.0%})")
             llm_matcher = LLMMatcher(
                 api_key=self.args.anthropic_api_key,
@@ -539,9 +539,9 @@ class GaugeOrchestrator:
 
     def _auto_match_images(self, images: list[str], matcher) -> tuple[list[ImagePair], list[str]]:
         """Auto-match alternative images to Chainguard equivalents."""
-        from utils.dfc_contributor import DFCContributor
-        from utils.image_matcher import MatchResult
-        from utils.manual_mapping_populator import ManualMappingPopulator
+        from forge_gauge.utils.dfc_contributor import DFCContributor
+        from forge_gauge.utils.image_matcher import MatchResult
+        from forge_gauge.utils.manual_mapping_populator import ManualMappingPopulator
         dfc_contributor = DFCContributor(output_dir=Path("output")) if self.args.generate_dfc_pr else None
         if dfc_contributor:
             logger.info("DFC contribution generation enabled")
@@ -654,7 +654,7 @@ class GaugeOrchestrator:
 
     def _execute_scans(self) -> list:
         """Execute scans with checkpoint/resume support."""
-        from core.persistence import ScanResultPersistence
+        from forge_gauge.core.persistence import ScanResultPersistence
         persistence = ScanResultPersistence(self.args.checkpoint_file)
 
         # Handle retry-failures mode
@@ -752,9 +752,9 @@ class GaugeOrchestrator:
 
     def _generate_pricing_quote(self, safe_customer_name: str) -> dict:
         """Generate pricing quote reports (HTML and TXT)."""
-        from utils.image_classifier import ImageClassifier
-        from utils.pricing_calculator import PricingCalculator
-        from outputs.pricing_quote_generator import PricingQuoteGenerator
+        from forge_gauge.utils.image_classifier import ImageClassifier
+        from forge_gauge.utils.pricing_calculator import PricingCalculator
+        from forge_gauge.outputs.pricing_quote_generator import PricingQuoteGenerator
         output_files = {}
         try:
             if not self.args.pricing_policy.exists():

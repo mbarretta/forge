@@ -110,7 +110,7 @@ class TokenManager:
             True if refresh succeeded
         """
         try:
-            from utils.gcr_auth import GCRAuthenticator
+            from forge_gauge.utils.gcr_auth import GCRAuthenticator
 
             logger.info("Refreshing Google Cloud Registry authentication token...")
             gcr_auth = GCRAuthenticator()

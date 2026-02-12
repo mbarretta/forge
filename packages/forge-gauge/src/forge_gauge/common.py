@@ -51,7 +51,7 @@ class GitHubAuthValidator:
         """Validate GitHub authentication and repository access."""
         self._check_pricing_policy()
         logger.info("Validating GitHub authentication for pricing tier classification...")
-        from integrations.github_metadata import GitHubMetadataClient
+        from forge_gauge.integrations.github_metadata import GitHubMetadataClient
         test_client = GitHubMetadataClient()
         if not test_client.token:
             self._handle_no_token()
@@ -116,7 +116,7 @@ class GitHubAuthValidator:
             import subprocess
             subprocess.run(["gh", "auth", "refresh", "-s", "repo"], check=True, capture_output=True)
             logger.info("✓ Token refreshed successfully. Retrying access...")
-            from utils.github_utils import get_github_token_from_gh_cli
+            from forge_gauge.utils.github_utils import get_github_token_from_gh_cli
             import requests
             new_token = get_github_token_from_gh_cli()
             if new_token:

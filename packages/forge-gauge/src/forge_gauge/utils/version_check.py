@@ -122,7 +122,7 @@ def _fetch_latest_release() -> Optional[str]:
         import urllib.request
         import json
 
-        from utils.github_utils import github_api_headers
+        from forge_gauge.utils.github_utils import github_api_headers
 
         request = urllib.request.Request(
             GITHUB_RELEASES_URL,

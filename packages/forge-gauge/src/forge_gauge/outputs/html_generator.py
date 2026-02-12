@@ -126,8 +126,8 @@ class HTMLGenerator:
             output_path: Output file path
             config: HTML generator configuration
         """
-        from core.exceptions import OutputException
-        from outputs.config import HTMLGeneratorConfig
+        from forge_gauge.core.exceptions import OutputException
+        from forge_gauge.outputs.config import HTMLGeneratorConfig
 
         # Validate config
         if not isinstance(config, HTMLGeneratorConfig):

@@ -99,7 +99,7 @@ def match_images(
     # Initialize LLM matcher if enabled
     llm_matcher = None
     if enable_llm_matching:
-        from utils.llm_matcher import LLMMatcher
+        from forge_gauge.utils.llm_matcher import LLMMatcher
         logger.info(f"LLM matching enabled (model: {llm_model}, threshold: {llm_confidence_threshold:.0%})")
         llm_matcher = LLMMatcher(
             api_key=anthropic_api_key,
@@ -113,7 +113,7 @@ def match_images(
     # Initialize version matcher (unless always_match_cgr_latest is set)
     version_matcher = None
     if not always_match_cgr_latest:
-        from utils.version_matcher import VersionMatcher
+        from forge_gauge.utils.version_matcher import VersionMatcher
         version_matcher = VersionMatcher()
         logger.info("Version matching enabled - will resolve to appropriate cgr.dev version")
     else:
@@ -136,7 +136,7 @@ def match_images(
     # Initialize DFC contributor if requested
     dfc_contributor = None
     if generate_dfc_pr:
-        from utils.dfc_contributor import DFCContributor
+        from forge_gauge.utils.dfc_contributor import DFCContributor
         # Put DFC contributions in the same directory as matched-log.csv
         dfc_contributor = DFCContributor(output_dir=output_file.parent)
         logger.info("DFC contribution generation enabled")

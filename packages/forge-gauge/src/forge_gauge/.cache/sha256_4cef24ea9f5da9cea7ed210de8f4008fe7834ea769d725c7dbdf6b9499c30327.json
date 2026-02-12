@@ -1,0 +1,17 @@
+{
+  "digest": "sha256:4cef24ea9f5da9cea7ed210de8f4008fe7834ea769d725c7dbdf6b9499c30327",
+  "image": "cgr.dev/chainguard-private/nginx:latest",
+  "timestamp": "2026-02-12T04:14:01.928852+00:00",
+  "size_mb": 17,
+  "package_count": 20,
+  "vulnerabilities": {
+    "total": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "negligible": 0
+  },
+  "used_latest_fallback": false,
+  "original_image": null
+}

@@ -55,7 +55,7 @@ def get_cve_monthly_ratios(
 
     # Try to fetch dynamic ratios from API using Chainguard image data
     try:
-        from integrations.chainguard_api import get_shared_client
+        from forge_gauge.integrations.chainguard_api import get_shared_client
 
         # Parse Chainguard image name to extract repo and tag
         repo, tag = _parse_image_name(chainguard_image_name)
@@ -180,7 +180,7 @@ def prefetch_cve_ratios_batch(
 
     # Initialize shared API client once before parallel calls
     try:
-        from integrations.chainguard_api import get_shared_client
+        from forge_gauge.integrations.chainguard_api import get_shared_client
         api = get_shared_client()
     except RuntimeError as e:
         logger.debug(f"Cannot use Chainguard API for prefetch: {e}")

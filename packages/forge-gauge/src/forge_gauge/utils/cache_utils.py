@@ -37,6 +37,10 @@ def ensure_cache_dir(cache_dir: Optional[Path] = None, subdir: str = "") -> Path
         >>> cache_dir == Path("/custom/cache")
         True
     """
+    # Convert string to Path if needed
+    if cache_dir is not None and isinstance(cache_dir, str):
+        cache_dir = Path(cache_dir)
+
     base_dir = cache_dir or DEFAULT_CACHE_DIR
 
     if subdir:
