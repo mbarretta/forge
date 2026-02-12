@@ -43,15 +43,14 @@ class GaugePlugin:
         The "command" parameter is treated as a positional subcommand by the CLI:
         - forge gauge scan --input file.csv
         - forge gauge match --input file.csv
-        - forge gauge update
         """
         return [
             # Subcommand selection (positional in CLI, not a --flag)
             ToolParam(
                 name="command",
-                description="Subcommand: scan, match, or update",
+                description="Subcommand: scan or match",
                 required=True,
-                choices=["scan", "match", "update"],
+                choices=["scan", "match"],
             ),
             # Input/Output arguments (common to scan and match)
             ToolParam(
@@ -293,8 +292,6 @@ class GaugePlugin:
                     summary="match command requires --input",
                 )
             return self._run_match(args, ctx)
-        elif command == "update":
-            return self._run_update(args, ctx)
         else:
             return ToolResult(
                 status=ResultStatus.FAILURE,
@@ -407,30 +404,6 @@ class GaugePlugin:
             return ToolResult(
                 status=ResultStatus.FAILURE,
                 summary=f"Match failed: {str(e)}",
-            )
-
-    def _run_update(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
-        """Execute gauge update command."""
-        from forge_gauge.plugins.gauge_core.update_command import execute_update
-
-        update_args = self._args_to_namespace(args)
-
-        ctx.progress(0.0, "Checking for updates")
-
-        try:
-            exit_code = execute_update(update_args)
-            ctx.progress(1.0, "Update check complete")
-
-            return ToolResult(
-                status=ResultStatus.SUCCESS if exit_code == 0 else ResultStatus.FAILURE,
-                summary="Update check completed" if exit_code == 0 else "Update check failed",
-                data={"command": "update"},
-            )
-        except Exception as e:
-            logger.exception("Update command failed")
-            return ToolResult(
-                status=ResultStatus.FAILURE,
-                summary=f"Update failed: {str(e)}",
             )
 
     def _args_to_namespace(self, args: dict[str, Any]) -> argparse.Namespace:
