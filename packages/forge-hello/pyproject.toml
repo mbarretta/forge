@@ -1,0 +1,25 @@
+[project]
+name = "forge-hello"
+version = "0.1.0"
+description = "Hello world test plugin for FORGE"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Chainguard Field Engineering" }
+]
+dependencies = [
+    "forge-core",
+]
+
+[project.entry-points."forge.plugins"]
+hello = "forge_hello:create_plugin"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/forge_hello"]
+
+[tool.uv.sources]
+forge-core = { workspace = true }
