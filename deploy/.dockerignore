@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+*.whl
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# Docker
+Dockerfile*
+docker-compose.yml
+
+# Docs
+*.md
+docs/
+plans/
+
+# Tests
+tests/
+*.test.js
+*.spec.ts
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Misc
+.env*
+*.log

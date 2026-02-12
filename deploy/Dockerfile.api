@@ -1,0 +1,51 @@
+# Build stage: install Python dependencies
+FROM cgr.dev/chainguard-private/python:latest-dev AS builder
+
+WORKDIR /app
+
+# Install uv for fast dependency resolution
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Copy workspace definition and all package configs
+COPY pyproject.toml uv.lock* ./
+COPY src/forge/ src/forge/
+COPY packages/forge-core/pyproject.toml packages/forge-core/pyproject.toml
+COPY packages/forge-cli/pyproject.toml packages/forge-cli/pyproject.toml
+COPY packages/forge-api/pyproject.toml packages/forge-api/pyproject.toml
+
+# Copy all plugin pyproject.toml files
+COPY packages/forge-hello/pyproject.toml packages/forge-hello/pyproject.toml
+
+# Install dependencies (creates .venv)
+RUN uv sync --frozen --no-dev --no-install-project
+
+# Copy source code
+COPY packages/forge-core/src/ packages/forge-core/src/
+COPY packages/forge-cli/src/ packages/forge-cli/src/
+COPY packages/forge-api/src/ packages/forge-api/src/
+COPY packages/forge-hello/src/ packages/forge-hello/src/
+
+# Install all packages
+RUN uv sync --frozen --no-dev
+
+
+# Runtime stage: minimal image
+FROM cgr.dev/chainguard-private/python:latest
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /app/.venv /app/.venv
+
+# Ensure venv is on PATH
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz').read()"
+
+# Default: run API server
+CMD ["uvicorn", "forge_api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080"]
