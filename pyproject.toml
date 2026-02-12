@@ -15,6 +15,7 @@ dependencies = [
     "forge-hello",  # temporary test plugin
     "forge-gauge",
     "forge-provenance",
+    "forge-coverage",
     # TODO: Add when created:
     # "forge-ils",
 ]
@@ -28,6 +29,7 @@ forge-hello = { workspace = true }
 forge-api = { workspace = true }
 forge-gauge = { workspace = true }
 forge-provenance = { workspace = true }
+forge-coverage = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -37,6 +39,7 @@ members = [
     "packages/forge-hello",
     "packages/forge-gauge",
     "packages/forge-provenance",
+    "packages/forge-coverage",
     # TODO: Add when created:
     # "packages/forge-ils",
 ]

@@ -1,0 +1,4 @@
+# Minimal Python requirements for quick testing
+requests>=2.31.0
+pyyaml>=6.0
+packaging>=23.0
