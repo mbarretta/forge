@@ -1,0 +1,82 @@
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.tool-card {
+  display: block;
+  padding: 1.5rem;
+  background-color: #1e1e1e;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+}
+
+.tool-card:hover {
+  border-color: #646cff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.1);
+}
+
+.tool-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25em;
+  font-family: monospace;
+}
+
+.tool-description {
+  color: #aaa;
+  margin: 0 0 1rem 0;
+  line-height: 1.4;
+}
+
+.tool-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.tool-version {
+  font-family: monospace;
+}
+
+.error {
+  color: #ff6b6b;
+  padding: 1rem;
+  background-color: rgba(255, 107, 107, 0.1);
+  border-radius: 4px;
+}
+
+.empty {
+  color: #888;
+  text-align: center;
+  padding: 3rem 0;
+}
+
+@media (prefers-color-scheme: light) {
+  .tool-card {
+    background-color: #ffffff;
+    border-color: #e0e0e0;
+  }
+
+  .tool-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .tool-description {
+    color: #666;
+  }
+
+  .tool-meta {
+    color: #888;
+  }
+
+  .error {
+    background-color: rgba(255, 107, 107, 0.1);
+  }
+}
