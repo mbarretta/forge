@@ -12,7 +12,6 @@ Scan container images for vulnerabilities and generate comprehensive security as
 **Commands:**
 - `scan` - Vulnerability scanning with HTML/XLSX/YAML reports
 - `match` - Match alternative images to Chainguard equivalents
-- `update` - Check for gauge updates
 
 **Key Features:**
 - Multi-format reports (HTML executive summaries, XLSX cost analysis)
@@ -66,7 +65,7 @@ uv sync
 
 # Run with uv prefix
 uv run forge
-uv run forge gauge --command scan --help
+uv run forge gauge scan --help
 ```
 
 ### Prerequisites
@@ -100,7 +99,7 @@ brew install grype
 
 #### Scan a Single Image
 ```bash
-forge gauge --command scan \
+forge gauge scan \
   --input nginx:latest \
   --output html,xlsx \
   --customer "Acme Corp"
@@ -108,7 +107,7 @@ forge gauge --command scan \
 
 #### Scan a Chainguard Organization
 ```bash
-forge gauge --command scan \
+forge gauge scan \
   --organization my-chainguard-org \
   --output html,xlsx,yaml \
   --with-all  # Enable CHPS, FIPS, KEVs
@@ -117,7 +116,7 @@ forge gauge --command scan \
 #### Scan from CSV File
 ```bash
 # Create images.csv with: image_name,image_tag
-forge gauge --command scan \
+forge gauge scan \
   --input images.csv \
   --output html,xlsx \
   --max-workers 4 \
@@ -126,7 +125,7 @@ forge gauge --command scan \
 
 #### Match Images to Chainguard Equivalents
 ```bash
-forge gauge --command match \
+forge gauge match \
   --input images.csv \
   --output matched-log.yaml \
   --min-confidence 0.7 \
@@ -135,7 +134,7 @@ forge gauge --command match \
 
 #### Advanced Scanning Options
 ```bash
-forge gauge --command scan \
+forge gauge scan \
   --input images.csv \
   --output html,xlsx,yaml \
   --customer "Acme Corp" \
@@ -152,7 +151,7 @@ forge gauge --command scan \
 ```
 
 **Key Parameters:**
-- `--command` - Required: `scan`, `match`, or `update`
+- `<command>` - Required subcommand: `scan` or `match`
 - `--input` - Image reference, CSV file, or organization
 - `--organization` - Chainguard org to scan
 - `--output` - Output formats: `html`, `xlsx`, `yaml` (comma-separated)
@@ -454,7 +453,7 @@ chainctl auth login
 chainctl auth status
 
 # FORGE automatically uses your chainctl token
-forge gauge --command scan --organization my-org
+forge gauge scan --organization my-org
 ```
 
 For API usage, tokens can be provided via:
@@ -506,7 +505,7 @@ FORGE can be used in CI/CD pipelines:
 - name: Scan container images
   run: |
     uv tool install git+https://github.com/chainguard/forge
-    forge gauge --command scan \
+    forge gauge scan \
       --input production-images.csv \
       --output yaml \
       --output-dir ./reports
@@ -566,7 +565,7 @@ forge provenance --help
 forge version
 
 # Enable verbose logging
-forge gauge --command scan --input nginx:latest -v
+forge gauge scan --input nginx:latest -v
 ```
 
 ---
