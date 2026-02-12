@@ -16,6 +16,7 @@ import argparse
 import subprocess
 import sys
 
+from forge_cli import __version__
 from forge_core.registry import discover_plugins
 
 FORGE_BANNER = r"""
@@ -26,8 +27,6 @@ FORGE_BANNER = r"""
    ██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗
    ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
 """
-
-__version__ = "0.1.0"
 
 
 def show_help(plugins: dict) -> None:

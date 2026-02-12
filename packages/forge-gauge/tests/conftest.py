@@ -103,14 +103,6 @@ def sample_failed_scan_result(sample_image_pair):
 
 
 @pytest.fixture
-def temp_cache_dir(tmp_path):
-    """Temporary cache directory for testing."""
-    cache_dir = tmp_path / "cache"
-    cache_dir.mkdir()
-    return cache_dir
-
-
-@pytest.fixture
 def sample_csv_content():
     """Sample CSV content for testing."""
     return """alternative_image,chainguard_image
