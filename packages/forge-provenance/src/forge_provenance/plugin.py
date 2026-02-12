@@ -71,9 +71,9 @@ class ProvenancePlugin:
                 summary=f"Missing required tools: {', '.join(missing)}",
             )
 
-        customer_org = args["customer-org"]
+        customer_org = args["customer_org"]  # argparse converts hyphens to underscores
         full_mode = args.get("full", False)
-        verify_signatures = args.get("verify-signatures", False) or full_mode
+        verify_signatures = args.get("verify_signatures", False) or full_mode
         limit = args.get("limit", 0)
         output_file = args.get("output")
 
@@ -133,7 +133,8 @@ class ProvenancePlugin:
 
             results.append(result)
 
-            if result.status == "PASS":
+            # Count successful verifications (DELIVERY_VERIFIED or VERIFIED)
+            if result.status in ("DELIVERY_VERIFIED", "VERIFIED"):
                 passed_count += 1
             else:
                 failed_count += 1
