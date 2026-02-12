@@ -1,0 +1,14 @@
+apiVersion: v2
+name: forge
+description: FORGE - Chainguard Field Engineering Toolkit
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - forge
+  - chainguard
+  - security
+  - tools
+home: https://github.com/chainguard/forge
+maintainers:
+  - name: Chainguard Field Engineering
