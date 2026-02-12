@@ -7,9 +7,7 @@ import hashlib
 import json
 import logging
 import os
-import shutil
 import subprocess
-import sys
 import textwrap
 import threading
 import time
@@ -19,7 +17,6 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Iterator, Any
-from urllib.parse import quote
 
 import packaging.requirements
 import psycopg

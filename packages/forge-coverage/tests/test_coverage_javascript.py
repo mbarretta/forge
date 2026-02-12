@@ -7,21 +7,17 @@ Tests coverage checking against common JavaScript libraries.
 import json
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from forge_coverage import check_coverage
-
-
-# Test fixtures directory
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 class TestJavaScriptCoverageBasics:
     """Test basic JavaScript coverage checking functionality."""
 
-    def test_load_package_lock_json(self):
+    def test_load_package_lock_json(self, fixtures_dir):
         """Test loading package-lock.json file."""
-        lock_file = FIXTURES_DIR / "package-lock.json"
+        lock_file = fixtures_dir / "package-lock.json"
 
         # Verify file exists and is valid JSON
         assert lock_file.exists()
@@ -33,9 +29,9 @@ class TestJavaScriptCoverageBasics:
         assert data["lockfileVersion"] == 3
         assert "packages" in data
 
-    def test_package_lock_has_common_packages(self):
+    def test_package_lock_has_common_packages(self, fixtures_dir):
         """Test that our fixture includes common packages."""
-        lock_file = FIXTURES_DIR / "package-lock.json"
+        lock_file = fixtures_dir / "package-lock.json"
 
         with open(lock_file) as f:
             data = json.load(f)
@@ -87,14 +83,16 @@ class TestFlatcoverIntegration:
         fake_flatcover.write_text("#!/bin/bash\necho 'fake flatcover'")
         fake_flatcover.chmod(0o755)
 
-        # Change to that directory
+        # Change to that directory so ./flatcover is resolved correctly
         monkeypatch.chdir(tmp_path)
 
-        with patch("forge_coverage.check_coverage.Path") as mock_path:
-            mock_path.return_value = fake_flatcover
-            # This would normally check for ./flatcover
-            local_flatcover = Path("./flatcover")
-            assert local_flatcover.exists() if tmp_path else True
+        # Verify the local flatcover exists
+        local_flatcover = Path("./flatcover")
+        assert local_flatcover.exists()
+
+        # Test that ensure_flatcover would detect it
+        # (We can't easily test the actual function without mocking cache checks,
+        # but we verify the precondition: local ./flatcover exists)
 
 
 class TestJavaScriptCoverageWithMocks:
@@ -169,38 +167,30 @@ class TestJavaScriptCoverageAggregation:
     """Test aggregation of results from multiple lock files."""
 
     def test_aggregate_results_or_logic(self):
-        """Test that results are aggregated with OR logic."""
-        # Simulate results from multiple files
-        all_results = {}
+        """Test that JSPackageResult can represent OR-aggregated results.
 
-        # File 1: express found, react not found
-        file1_results = [
-            check_coverage.JSPackageResult("express", "4.18.2", True),
-            check_coverage.JSPackageResult("react", "18.2.0", False),
-        ]
+        Note: This documents the data structure used for aggregation.
+        The actual aggregation logic is in check_js_coverage_with_flatcover()
+        at lines 1166-1209 of check_coverage.py.
+        """
+        # Verify JSPackageResult dataclass works as expected for aggregation
+        result1 = check_coverage.JSPackageResult("express", "4.18.2", True)
+        result2 = check_coverage.JSPackageResult("react", "18.2.0", False)
+        result3 = check_coverage.JSPackageResult("react", "18.2.0", True)
 
-        for result in file1_results:
-            key = (result.name, result.version)
-            all_results[key] = result.found
+        # Aggregation dict pattern used by check_js_coverage_with_flatcover
+        aggregated = {}
 
-        # File 2: express found, react found
-        file2_results = [
-            check_coverage.JSPackageResult("express", "4.18.2", True),
-            check_coverage.JSPackageResult("react", "18.2.0", True),
-        ]
+        # First file
+        aggregated[("express", "4.18.2")] = result1.found
+        aggregated[("react", "18.2.0")] = result2.found
 
-        for result in file2_results:
-            key = (result.name, result.version)
-            # OR logic: if found in any file, mark as found
-            if key in all_results:
-                all_results[key] = all_results[key] or result.found
-            else:
-                all_results[key] = result.found
+        # Second file - OR logic
+        aggregated[("react", "18.2.0")] = aggregated[("react", "18.2.0")] or result3.found
 
-        # express should be True (found in both)
-        assert all_results[("express", "4.18.2")] is True
-        # react should be True (found in file 2)
-        assert all_results[("react", "18.2.0")] is True
+        # Verify OR aggregation works
+        assert aggregated[("express", "4.18.2")] is True
+        assert aggregated[("react", "18.2.0")] is True  # False OR True = True
 
 
 @pytest.mark.integration
@@ -212,9 +202,9 @@ class TestJavaScriptCoverageIntegration:
     with: pytest -m "not integration"
     """
 
-    def test_check_javascript_packages_real_flatcover(self):
+    def test_check_javascript_packages_real_flatcover(self, fixtures_dir):
         """Test checking JavaScript packages with real flatcover."""
-        lock_file = FIXTURES_DIR / "package-lock.json"
+        lock_file = fixtures_dir / "package-lock.json"
 
         # This test requires:
         # 1. flatcover binary available
@@ -253,9 +243,9 @@ class TestJavaScriptCoverageIntegration:
         except Exception as e:
             pytest.skip(f"Skipping integration test: {e}")
 
-    def test_common_javascript_libraries_documented(self):
+    def test_common_javascript_libraries_documented(self, fixtures_dir):
         """Document which common JavaScript libraries we're testing."""
-        lock_file = FIXTURES_DIR / "package-lock.json"
+        lock_file = fixtures_dir / "package-lock.json"
 
         with open(lock_file) as f:
             data = json.load(f)
@@ -279,9 +269,9 @@ class TestJavaScriptCoverageIntegration:
 class TestJavaScriptModeEndToEnd:
     """Test JavaScript mode end-to-end with mocking."""
 
-    def test_check_js_coverage_with_mocks(self, tmp_path):
+    def test_check_js_coverage_with_mocks(self, tmp_path, fixtures_dir):
         """Test complete JavaScript coverage check with mocked components."""
-        lock_file = FIXTURES_DIR / "package-lock.json"
+        lock_file = fixtures_dir / "package-lock.json"
 
         with patch("forge_coverage.check_coverage.ensure_flatcover") as mock_ensure, \
              patch("forge_coverage.check_coverage.get_organization_id") as mock_org, \

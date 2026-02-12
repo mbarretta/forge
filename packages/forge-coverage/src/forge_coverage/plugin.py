@@ -2,15 +2,27 @@
 FORGE plugin wrapper for coverage checking tool.
 """
 
+from __future__ import annotations
+
 import argparse
 import logging
 import sys
+from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 from typing import Any
 
 from forge_core.context import ExecutionContext
-from forge_core.plugin import ToolParam, ToolResult, ResultStatus
+from forge_core.plugin import ResultStatus, ToolParam, ToolResult
+
+# Import constants from check_coverage to avoid duplication
+from forge_coverage.check_coverage import (
+    SUPPORTED_ARCHITECTURES,
+    SUPPORTED_MANYLINUX_VARIANTS,
+    SUPPORTED_PYTHON_VERSIONS,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class CoveragePlugin:
@@ -51,21 +63,21 @@ class CoveragePlugin:
                 description="Require wheels for specific architecture",
                 type="str",
                 required=False,
-                choices=["amd64", "arm64"],
+                choices=SUPPORTED_ARCHITECTURES,
             ),
             ToolParam(
                 name="python-version",
                 description="Require wheels for specific Python version",
                 type="str",
                 required=False,
-                choices=["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"],
+                choices=SUPPORTED_PYTHON_VERSIONS,
             ),
             ToolParam(
                 name="manylinux-variant",
                 description="Require wheels for specific manylinux variant",
                 type="str",
                 required=False,
-                choices=["2_28", "2_39"],
+                choices=SUPPORTED_MANYLINUX_VARIANTS,
             ),
             ToolParam(
                 name="workers",
@@ -156,62 +168,61 @@ class CoveragePlugin:
 
     def run(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
         """Execute the coverage check."""
+        # Validate mode-specific requirements
+        mode = args.get("mode", "index")
+
+        if mode == "csv" and not args.get("csv"):
+            return ToolResult(
+                status=ResultStatus.FAILURE,
+                summary="The --csv argument is required when mode is 'csv'",
+            )
+
+        if mode == "api":
+            if not args.get("issue"):
+                return ToolResult(
+                    status=ResultStatus.FAILURE,
+                    summary="The --issue argument is required when mode is 'api'",
+                )
+            if args.get("force") and not args.get("refresh"):
+                return ToolResult(
+                    status=ResultStatus.FAILURE,
+                    summary="The --force argument can only be used with --refresh",
+                )
+        elif not args.get("requirements-file"):
+            return ToolResult(
+                status=ResultStatus.FAILURE,
+                summary="At least one requirements-file is required",
+            )
+
+        # Set up logging level
+        if args.get("verbose"):
+            logger.setLevel(logging.DEBUG)
+
         try:
-            # Validate mode-specific requirements
-            mode = args.get("mode", "index")
-
-            if mode == "csv" and not args.get("csv"):
-                return ToolResult(
-                    status=ResultStatus.FAILURE,
-                    summary="The --csv argument is required when mode is 'csv'",
-                )
-
-            if mode == "api":
-                if not args.get("issue"):
-                    return ToolResult(
-                        status=ResultStatus.FAILURE,
-                        summary="The --issue argument is required when mode is 'api'",
-                    )
-                if args.get("force") and not args.get("refresh"):
-                    return ToolResult(
-                        status=ResultStatus.FAILURE,
-                        summary="The --force argument can only be used with --refresh",
-                    )
-            elif not args.get("requirements-file"):
-                return ToolResult(
-                    status=ResultStatus.FAILURE,
-                    summary="At least one requirements-file is required",
-                )
-
-            # Set up logging
-            log_level = logging.DEBUG if args.get("verbose") else logging.INFO
-            logging.basicConfig(level=log_level, format="%(message)s")
-
             # Import the check_coverage module
             from forge_coverage import check_coverage
 
             # Convert args dict to argparse.Namespace
             ns = self._args_to_namespace(args)
 
+            ctx.progress(0.0, "Starting coverage check")
+
             # Capture stdout to return as output
-            old_stdout = sys.stdout
-            sys.stdout = captured_output = StringIO()
-
-            try:
-                # Call the main function
+            captured_output = StringIO()
+            with redirect_stdout(captured_output):
                 check_coverage.main_with_args(ns)
-                output = captured_output.getvalue()
 
-                return ToolResult(
-                    status=ResultStatus.SUCCESS,
-                    summary="Coverage check completed successfully",
-                    data={"output": output},
-                )
-            finally:
-                sys.stdout = old_stdout
+            output = captured_output.getvalue()
+            ctx.progress(1.0, "Coverage check completed")
+
+            return ToolResult(
+                status=ResultStatus.SUCCESS,
+                summary="Coverage check completed successfully",
+                data={"output": output},
+            )
 
         except Exception as e:
-            logging.error(f"Coverage check failed: {e}", exc_info=True)
+            logger.error(f"Coverage check failed: {e}", exc_info=True)
             return ToolResult(
                 status=ResultStatus.FAILURE,
                 summary=f"Coverage check failed: {e}",

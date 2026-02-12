@@ -6,22 +6,17 @@ Tests coverage checking against common Python libraries.
 
 import argparse
 import pytest
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from forge_coverage import check_coverage
-
-
-# Test fixtures directory
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 class TestPythonCoverageBasics:
     """Test basic Python coverage checking functionality."""
 
-    def test_load_requirements_from_file(self):
+    def test_load_requirements_from_file(self, fixtures_dir):
         """Test loading requirements from file."""
-        req_file = FIXTURES_DIR / "minimal_python.txt"
+        req_file = fixtures_dir / "minimal_python.txt"
         requirements = check_coverage.load_requirements_from_multiple_files([req_file])
 
         assert len(requirements) > 0
@@ -34,20 +29,20 @@ class TestPythonCoverageBasics:
         assert any("pyyaml" in name.lower() for name in req_names)
         assert any("packaging" in name.lower() for name in req_names)
 
-    def test_load_requirements_ignores_comments(self):
+    def test_load_requirements_ignores_comments(self, fixtures_dir):
         """Test that comments and empty lines are ignored."""
-        req_file = FIXTURES_DIR / "minimal_python.txt"
+        req_file = fixtures_dir / "minimal_python.txt"
         requirements = check_coverage.load_requirements_from_multiple_files([req_file])
 
         # Should not include comment lines
         for req in requirements:
             assert not req.name.startswith("#")
 
-    def test_load_requirements_multiple_files(self):
+    def test_load_requirements_multiple_files(self, fixtures_dir):
         """Test loading from multiple requirements files."""
         files = [
-            FIXTURES_DIR / "minimal_python.txt",
-            FIXTURES_DIR / "common_python.txt",
+            fixtures_dir / "minimal_python.txt",
+            fixtures_dir / "common_python.txt",
         ]
         requirements = check_coverage.load_requirements_from_multiple_files(files)
 
@@ -57,12 +52,6 @@ class TestPythonCoverageBasics:
 
 class TestPythonCoverageIndexMode:
     """Test Python coverage checking in index mode."""
-
-    @pytest.fixture
-    def mock_session(self):
-        """Create a mock requests session."""
-        session = Mock()
-        return session
 
     @pytest.fixture
     def sample_html_index(self):
@@ -119,22 +108,6 @@ class TestPythonCoverageIndexMode:
 class TestPythonCoverageWithMocks:
     """Test Python coverage with mocked HTTP responses."""
 
-    @pytest.fixture
-    def mock_requests_found(self):
-        """Mock successful package lookup."""
-        with patch("forge_coverage.check_coverage.requests.Session") as mock_session:
-            # Mock the get request for package index
-            mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.text = """
-            <!DOCTYPE html>
-            <html><body>
-                <a href="requests-2.31.0-py3-none-any.whl">requests-2.31.0-py3-none-any.whl</a>
-            </body></html>
-            """
-            mock_session.return_value.get.return_value = mock_response
-            yield mock_session
-
     def test_check_package_signature(self):
         """Test check_package function signature."""
         import inspect
@@ -147,22 +120,6 @@ class TestPythonCoverageWithMocks:
         assert "package_name" in params
         assert "package_requirements" in params
         assert "index_url" in params
-
-    def test_check_package_result_type(self):
-        """Test that check_package returns list of results."""
-        # Note: check_package requires a session and makes HTTP calls
-        # This test just verifies the structure without mocking everything
-        import packaging.requirements
-
-        # We can't easily test this without extensive mocking,
-        # so just verify the dataclass can be created
-        req = packaging.requirements.Requirement("requests>=2.31.0")
-        result = check_coverage.PackageCheckResult(
-            requirement=req,
-            status="found",
-        )
-
-        assert isinstance(result, check_coverage.PackageCheckResult)
 
 
 class TestPythonCoverageFilters:
@@ -239,9 +196,9 @@ class TestPythonCoverageIntegration:
     with: pytest -m "not integration"
     """
 
-    def test_check_minimal_requirements_real_api(self):
+    def test_check_minimal_requirements_real_api(self, fixtures_dir):
         """Test checking minimal requirements against real API."""
-        req_file = FIXTURES_DIR / "minimal_python.txt"
+        req_file = fixtures_dir / "minimal_python.txt"
         requirements = check_coverage.load_requirements_from_multiple_files([req_file])
 
         # Note: This will make real HTTP requests
@@ -262,9 +219,9 @@ class TestPythonCoverageIntegration:
             # Expected if not authenticated
             pytest.skip(f"Skipping integration test: {e}")
 
-    def test_check_common_python_libraries_coverage(self):
+    def test_check_common_python_libraries_coverage(self, fixtures_dir):
         """Test coverage of common Python libraries."""
-        req_file = FIXTURES_DIR / "common_python.txt"
+        req_file = fixtures_dir / "common_python.txt"
         requirements = check_coverage.load_requirements_from_multiple_files([req_file])
 
         # Verify we loaded expected packages
