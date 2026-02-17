@@ -63,6 +63,8 @@ class ProvenancePlugin:
 
     def run(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
         """Execute provenance verification."""
+        from forge_provenance.core import print_chain_details
+
         # Check external dependencies
         missing = check_dependencies()
         if missing:
@@ -89,8 +91,21 @@ class ProvenancePlugin:
                 summary="Not authenticated. Run 'chainctl auth login'",
             )
 
+        # Print header (like original script)
+        mode_desc = "DELIVERY VERIFICATION" if customer_only else "FULL VERIFICATION"
+        title = f"Chainguard Image Provenance   {mode_desc}"
+        print("╔══════════════════════════════════════════════════════════════════════════════╗")
+        print(f"║{title:^78}║")
+        print("╠══════════════════════════════════════════════════════════════════════════════╣")
+        print(f"║  Customer Org:     {customer_org:<58}║")
+        if not customer_only:
+            print(f"║  Reference Org:    {reference_org:<58}║")
+        print(f"║  Signature Verify: {str(verify_signatures):<58}║")
+        print("╚══════════════════════════════════════════════════════════════════════════════╝")
+        print()
+
         # Get images
-        ctx.progress(0.0, f"Fetching images for '{customer_org}'")
+        print(f"Fetching entitled images for '{customer_org}'...")
         images = get_image_list(customer_org)
 
         if not images:
@@ -99,27 +114,22 @@ class ProvenancePlugin:
                 summary="Could not retrieve image list",
             )
 
+        print(f"Found {len(images)} images")
+
         if limit > 0:
             images = images[:limit]
+            print(f"Limited to first {limit} images")
 
-        ctx.progress(0.1, f"Verifying {len(images)} images")
-
-        # Verify images
+        # Verify images with detailed output
+        print("\nVerifying images...")
         results = []
-        passed_count = 0
-        failed_count = 0
 
-        for i, image in enumerate(images):
+        for i, image in enumerate(images, 1):
             if ctx.is_cancelled:
                 return ToolResult(
                     status=ResultStatus.CANCELLED,
                     summary="Cancelled by user",
                 )
-
-            ctx.progress(
-                0.1 + 0.8 * (i / len(images)),
-                f"Verifying {image} ({i+1}/{len(images)})",
-            )
 
             result = verify_image(
                 image=image,
@@ -133,74 +143,97 @@ class ProvenancePlugin:
 
             results.append(result)
 
-            # Count successful verifications (DELIVERY_VERIFIED or VERIFIED)
-            if result.status in ("DELIVERY_VERIFIED", "VERIFIED"):
-                passed_count += 1
+            # Print detailed chain output for each image (like original script)
+            print_chain_details(result, i, customer_only=customer_only)
+
+        # Sort by image name
+        results.sort(key=lambda r: r.image)
+
+        # Write CSV - match original script format
+        csv_file = output_file or f"{customer_org}.csv"
+        with open(csv_file, "w", newline="") as f:
+            writer = csv.writer(f)
+            if customer_only:
+                writer.writerow([
+                    "image", "base_digest", "rekor_status", "rekor_log_index",
+                    "rekor_url", "signature_status", "verification_status", "error"
+                ])
+                for r in results:
+                    rekor_url = r.chain.customer_rekor_url or ""
+                    writer.writerow([
+                        r.image, r.chain.base_digest_full, r.rekor_status,
+                        r.chain.customer_rekor_index, rekor_url, r.sig_status,
+                        r.status, r.error
+                    ])
             else:
-                failed_count += 1
+                writer.writerow([
+                    "image", "base_digest", "reference_status", "rekor_status",
+                    "rekor_log_index", "rekor_url", "signature_status",
+                    "verification_status", "error"
+                ])
+                for r in results:
+                    rekor_url = ""
+                    if r.rekor_log_index:
+                        rekor_url = f"https://search.sigstore.dev/?logIndex={r.rekor_log_index}"
+                    writer.writerow([
+                        r.image, r.chain.base_digest_full, r.ref_status, r.rekor_status,
+                        r.rekor_log_index, rekor_url, r.sig_status, r.status, r.error
+                    ])
 
-        ctx.progress(0.9, "Generating report")
+        # Count results
+        counts = {}
+        for r in results:
+            counts[r.status] = counts.get(r.status, 0) + 1
 
-        # Generate CSV output
-        csv_output = StringIO()
-        writer = csv.writer(csv_output)
+        # Print summary (like original script)
+        print()
+        print("═" * 80)
+        print("  SUMMARY")
+        print("═" * 80)
+        print(f"  Customer Org:       {customer_org}")
+        if not customer_only:
+            print(f"  Reference Org:      {reference_org}")
+        print(f"  Mode:               {'Delivery Verification' if customer_only else 'Full Verification'}")
+        print(f"  Total Checked:      {len(results)}")
+        print()
 
-        # Write header
-        writer.writerow([
-            "Image",
-            "Base Digest",
-            "Reference Status",
-            "Rekor Status",
-            "Rekor Log Index",
-            "Signature Status",
-            "Overall Status",
-            "Error",
-        ])
+        if customer_only:
+            print(f"  Delivery Verified:  {counts.get('DELIVERY_VERIFIED', 0)}  (signed by Chainguard + in Rekor)")
+            print(f"  No Signature:       {counts.get('NO_SIG', 0)}")
+            print(f"  Partial:            {counts.get('PARTIAL', 0)}")
+            print(f"  No Base Digest:     {counts.get('NO_BASE', 0)}")
+            print(f"  Errors:             {counts.get('ERROR', 0)}")
+        else:
+            print(f"  Verified:           {counts.get('VERIFIED', 0)}  (in reference + Rekor)")
+            print(f"  Partial:            {counts.get('PARTIAL', 0)}   (in reference only)")
+            print(f"  Not Found:          {counts.get('NOT_FOUND', 0)}")
+            print(f"  No Base Digest:     {counts.get('NO_BASE', 0)}")
+            print(f"  Errors:             {counts.get('ERROR', 0)}")
 
-        # Write results
-        for result in results:
-            writer.writerow([
-                result.image,
-                result.base_digest,
-                result.ref_status,
-                result.rekor_status,
-                result.rekor_log_index,
-                result.sig_status,
-                result.status,
-                result.error,
-            ])
+        print()
+        print(f"  CSV Output:         {csv_file}")
+        print("═" * 80)
 
-        csv_content = csv_output.getvalue()
+        if customer_only:
+            print("\n  NOTE: To compare images across customers, share the base_digest")
+            print("        column from the CSV. Matching base_digest = same source image.")
 
-        # Save to file if specified
-        artifacts = {}
-        if output_file:
-            output_path = Path(output_file)
-            output_path.write_text(csv_content)
-            artifacts["report"] = str(output_path.resolve())
+        # Print warnings (like original script)
+        if not customer_only and counts.get("NOT_FOUND", 0) > 0:
+            print(f"\nWARNING: Some images not found in '{reference_org}'")
 
-        ctx.progress(1.0, "Verification complete")
+        if counts.get("PARTIAL", 0) > 0:
+            print("\nWARNING: Some images have no Rekor entries")
 
-        # Determine overall status
-        overall_status = ResultStatus.SUCCESS if failed_count == 0 else ResultStatus.PARTIAL
+        verified_count = counts.get("DELIVERY_VERIFIED", 0) if customer_only else counts.get("VERIFIED", 0)
+        if verified_count == len(results) and len(results) > 0:
+            print("\n✓ ALL IMAGES VERIFIED")
+
+        # Determine overall status based on results
+        overall_status = ResultStatus.SUCCESS if verified_count == len(results) else ResultStatus.PARTIAL
 
         return ToolResult(
             status=overall_status,
-            summary=f"Verified {len(images)} images: {passed_count} passed, {failed_count} failed",
-            data={
-                "total": len(images),
-                "passed": passed_count,
-                "failed": failed_count,
-                "results": [
-                    {
-                        "image": r.image,
-                        "base_digest": r.base_digest,
-                        "status": r.status,
-                        "error": r.error,
-                    }
-                    for r in results
-                ],
-                "csv": csv_content if not output_file else None,
-            },
-            artifacts=artifacts,
+            summary=f"Verified {len(results)} images in '{customer_org}'",
+            artifacts={"report": csv_file},
         )
