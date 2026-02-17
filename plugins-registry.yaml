@@ -1,0 +1,44 @@
+# FORGE External Plugin Registry
+#
+# This registry lists external plugins that can be installed via `forge plugin install`.
+# External plugins are installed from git repositories and work alongside built-in plugins.
+#
+# Format:
+#   plugin-name:
+#     package: "python-package-name"
+#     source: "git+https://github.com/org/repo.git"  or  "git+ssh://git@github.com/org/repo.git"
+#     ref: "v1.0.0"  # Optional: git tag, branch, or commit hash
+#     description: "Plugin description"
+#     plugin_type: "native" or "wrapper"
+#     tags: [tag1, tag2]
+#     private: true/false
+#
+# Plugin Types:
+#   - native: External project implements ToolPlugin directly
+#   - wrapper: FORGE provides adapter that wraps external tool (zero changes to external tool)
+#
+# Authentication:
+#   - HTTPS URLs use GitHub token from git config
+#   - SSH URLs use SSH keys (~/.ssh/id_*)
+#   - Same authentication as `git clone` - no additional setup needed
+
+external_plugins:
+  # Example native plugin (external project implements ToolPlugin)
+  # example-scanner:
+  #   package: "example-scanner"
+  #   source: "git+https://github.com/chainguard-dev/example-scanner.git"
+  #   ref: "v2.1.0"
+  #   description: "Example security scanner (native FORGE plugin)"
+  #   plugin_type: "native"
+  #   tags: [security, scanning]
+  #   private: true
+
+  # Example wrapped plugin (FORGE wrapper around external tool)
+  # legacy-tool:
+  #   package: "forge-legacy-tool-wrapper"
+  #   source: "git+https://github.com/chainguard-dev/forge-legacy-tool-wrapper.git"
+  #   ref: "v1.0.0"
+  #   description: "Legacy internal tool (wrapped)"
+  #   plugin_type: "wrapper"
+  #   tags: [legacy, compliance]
+  #   private: true
