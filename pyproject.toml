@@ -13,8 +13,6 @@ authors = [
 dependencies = [
     "forge-cli",
     "forge-hello",  # temporary test plugin
-    "forge-provenance",
-    "forge-coverage",
     # TODO: Add when created:
     # "forge-ils",
 ]
@@ -26,8 +24,6 @@ forge = "forge_cli.main:main"
 forge-cli = { workspace = true }
 forge-hello = { workspace = true }
 forge-api = { workspace = true }
-forge-provenance = { workspace = true }
-forge-coverage = { workspace = true }
 
 [tool.uv.workspace]
 members = [

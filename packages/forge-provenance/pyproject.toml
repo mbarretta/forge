@@ -9,6 +9,7 @@ authors = [
 ]
 dependencies = [
     "forge-core",
+    "verify-provenance @ git+https://github.com/mbarretta/cgr_verify_provenance.git",
 ]
 
 [project.entry-points."forge.plugins"]
