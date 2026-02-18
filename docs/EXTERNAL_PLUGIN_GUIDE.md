@@ -507,7 +507,12 @@ def create_plugin() -> ToolPlugin:
     return CLIToolWrapper()
 ```
 
-**Installation process:** When installing the wrapper, the external CLI tool must be separately installed and available in PATH.
+**Installation process:** When installing the wrapper, the external CLI tool must be available in PATH.
+
+If the upstream CLI tool is written in Go, TypeScript, or another non-Python language, you
+cannot declare it as a Python dep in `pyproject.toml`. Instead, add a `system_deps` entry to
+the plugin's registry record so `forge plugin install` installs the binary automatically.
+See [NON_PYTHON_WRAPPER_GUIDE.md](./NON_PYTHON_WRAPPER_GUIDE.md) for a full walkthrough.
 
 ### Wrapper Maintenance
 

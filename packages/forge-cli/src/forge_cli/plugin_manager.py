@@ -13,6 +13,8 @@ from typing import Any
 
 import yaml
 
+from forge_cli.system_deps import install_system_deps, parse_system_deps
+
 
 class PluginManager:
     """Manages external FORGE plugins from git repositories."""
@@ -131,6 +133,19 @@ class PluginManager:
                 file=sys.stderr,
             )
 
+        specs = parse_system_deps(plugin_info)
+        system_dep_failures = []
+        if specs:
+            print(f"\nInstalling system dependencies for '{name}'...")
+            for r in install_system_deps(specs):
+                if r.already_installed:
+                    print(f"  {r.spec.binary}: already installed, skipping")
+                elif r.success:
+                    print(f"  {r.spec.binary}: installed via {r.spec.manager}")
+                else:
+                    system_dep_failures.append(r)
+                    print(f"  Warning: {r.spec.binary}: {r.error_message}", file=sys.stderr)
+
         rc = self._run_uv(["pip", "install", git_url])
         if rc is None:
             return 1
@@ -149,6 +164,16 @@ class PluginManager:
 
         print(f"\n✓ Plugin '{name}' installed successfully")
         print(f"\nUsage: forge {plugin_info['package']} --help")
+
+        if system_dep_failures:
+            print(f"\nWarning: '{name}' installed but these system deps need manual setup:")
+            for r in system_dep_failures:
+                print(f"  {r.spec.binary} ({r.spec.manager}): {r.spec.package}")
+                if r.error_message:
+                    for line in r.error_message.splitlines():
+                        print(f"    {line}")
+            print("\nThe plugin is installed but may not function until the above are resolved.")
+
         return 0
 
     def update(self, name: str, ref: str | None = None) -> int:
@@ -230,6 +255,13 @@ class PluginManager:
             return rc
 
         print(f"\n✓ Plugin '{name}' removed successfully")
+
+        specs = parse_system_deps(plugin_info)
+        if specs:
+            binaries = ", ".join(s.binary for s in specs)
+            print(f"\nNote: System dependencies were not removed (they may be shared): {binaries}")
+            print("Remove them manually if no longer needed.")
+
         return 0
 
 
@@ -266,6 +298,11 @@ def format_plugin_list(plugins: dict[str, dict[str, Any]], verbose: bool = False
                 lines.append(f"    Ref:     {info['ref']}")
             if info.get("tags"):
                 lines.append(f"    Tags:    {', '.join(info['tags'])}")
+            specs = parse_system_deps(info)
+            if specs:
+                lines.append("    System deps:")
+                for s in specs:
+                    lines.append(f"      {s.binary:<20} ({s.manager}) {s.package}")
             lines.append("")
 
     return "\n".join(lines)

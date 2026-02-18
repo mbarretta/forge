@@ -773,6 +773,130 @@ ssh -T git@github.com
 
 ---
 
+## Template 5: Non-Python CLI Wrapper (with `system_deps`)
+
+For tools written in Go, TypeScript/Node.js, or other non-Python languages where the upstream
+binary cannot be declared as a Python dependency in `pyproject.toml`. The binary is installed
+automatically when the user runs `forge plugin install`.
+
+> For a full walkthrough including cross-platform notes and testing patterns, see
+> [NON_PYTHON_WRAPPER_GUIDE.md](./NON_PYTHON_WRAPPER_GUIDE.md).
+
+### pyproject.toml
+
+```toml
+[project]
+name = "forge-mytool-wrapper"
+version = "1.0.0"
+description = "FORGE wrapper for mytool (Go/Node.js binary)"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+
+dependencies = [
+    "forge-core>=0.1.0",
+    # No upstream dep here — binary is installed via system_deps in registry
+]
+
+[project.entry-points."forge.plugins"]
+mytool = "forge_mytool_wrapper:create_plugin"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+```
+
+### plugin.py
+
+```python
+"""FORGE wrapper for mytool (non-Python CLI)."""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+from typing import Any
+
+from forge_core.context import ExecutionContext
+from forge_core.plugin import ResultStatus, ToolParam, ToolPlugin, ToolResult
+
+REQUIRED_TOOLS = ["mytool"]
+
+
+def assert_dependencies() -> None:
+    missing = [t for t in REQUIRED_TOOLS if not shutil.which(t)]
+    if missing:
+        raise RuntimeError(
+            f"Missing required tools: {', '.join(missing)}\n"
+            "Run `forge plugin install mytool` to install."
+        )
+
+
+class MyToolPlugin:
+    name = "mytool"
+    description = "Wraps the mytool binary"
+    version = "1.0.0"
+
+    def get_params(self) -> list[ToolParam]:
+        return [
+            ToolParam(name="input", description="Input to process", required=True),
+            ToolParam(name="verbose", description="Verbose output", type="bool", default=False),
+        ]
+
+    def run(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
+        assert_dependencies()
+
+        cmd = self._build_cmd(args)
+        ctx.progress(0.1, f"Running mytool on {args['input']}...")
+
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        if result.returncode == 0:
+            return ToolResult(
+                status=ResultStatus.SUCCESS,
+                summary=result.stdout.strip() or "Completed successfully",
+                data={"stdout": result.stdout},
+            )
+        return ToolResult(
+            status=ResultStatus.FAILURE,
+            summary=f"mytool failed (exit {result.returncode})",
+            data={"stderr": result.stderr},
+        )
+
+    def _build_cmd(self, args: dict[str, Any]) -> list[str]:
+        cmd = ["mytool", args["input"]]
+        if args.get("verbose"):
+            cmd.append("--verbose")
+        return cmd
+
+
+def create_plugin() -> ToolPlugin:
+    return MyToolPlugin()
+```
+
+### Registry YAML snippet
+
+```yaml
+external_plugins:
+  mytool:
+    package: "forge-mytool-wrapper"
+    source: "git+https://github.com/your-org/forge-mytool-wrapper.git"
+    ref: "v1.0.0"
+    description: "Wraps the mytool binary"
+    plugin_type: "wrapper"
+    tags: [tools]
+    private: false
+    system_deps:
+      # Go example:
+      - manager: "go"
+        package: "github.com/your-org/mytool/cmd/mytool@v1.2.3"
+        binary: "mytool"
+      # Node.js / TypeScript example (use one or the other):
+      # - manager: "npm"
+      #   package: "@your-org/mytool@2.0.0"
+      #   binary: "mytool"
+```
+
+---
+
 ## Next Steps
 
 1. Choose appropriate template for your external tool
