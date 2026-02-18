@@ -42,3 +42,12 @@ external_plugins:
   #   plugin_type: "wrapper"
   #   tags: [legacy, compliance]
   #   private: true
+
+  gauge:
+    package: "forge-gauge"
+    source: "git+https://github.com/chainguard/forge.git#subdirectory=packages/forge-gauge"
+    ref: "main"
+    description: "Container vulnerability scanning and image matching (wraps chainguard-dev/gauge)"
+    plugin_type: "wrapper"
+    tags: [security, scanning, vulnerability, matching]
+    private: true
