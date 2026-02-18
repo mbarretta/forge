@@ -268,6 +268,16 @@ class GaugePlugin:
                 description="Disable automatic GCR authentication",
                 type="bool",
             ),
+            ToolParam(
+                name="verbose",
+                description="Enable verbose logging",
+                type="bool",
+            ),
+            ToolParam(
+                name="disable-mapping-auto-population",
+                description="Disable auto-populating manual upstream mappings",
+                type="bool",
+            ),
         ]
 
     def run(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
@@ -301,6 +311,25 @@ class GaugePlugin:
     def _run_scan(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
         """Execute gauge scan command."""
         from forge_gauge.core.orchestrator import GaugeOrchestrator
+
+        # Validate mutually exclusive flags (matching gauge's execute_scan behavior)
+        if args.get("retry_failures") and args.get("resume"):
+            return ToolResult(
+                status=ResultStatus.FAILURE,
+                summary="--retry-failures and --resume are mutually exclusive",
+            )
+        if args.get("skip_permanent_failures") and not args.get("retry_failures"):
+            return ToolResult(
+                status=ResultStatus.FAILURE,
+                summary="--skip-permanent-failures requires --retry-failures",
+            )
+        if args.get("retry_failures"):
+            checkpoint = Path(args.get("checkpoint_file", ".gauge_checkpoint.json"))
+            if not checkpoint.exists():
+                return ToolResult(
+                    status=ResultStatus.FAILURE,
+                    summary=f"--retry-failures requires existing checkpoint file: {checkpoint}",
+                )
 
         # Convert args dict to argparse Namespace
         scan_args = self._args_to_namespace(args)
@@ -419,10 +448,6 @@ class GaugePlugin:
             "cache_dir", "checkpoint_file", "upstream_mappings_file",
             "dfc_mappings_file", "gcr_credentials"
         }
-
-        # Set defaults for gauge internal parameters not exposed in FORGE
-        ns.disable_mapping_auto_population = False
-        ns.verbose = False
 
         # Map all parameters
         for key, value in args.items():

@@ -7,7 +7,9 @@ import json
 import pytest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, MagicMock, patch
+
+from forge_core.plugin import ResultStatus
 
 from forge_gauge.core.models import ImagePair, ScanResult, ImageAnalysis, VulnerabilityCount
 from forge_gauge.core.persistence import ScanResultPersistence
@@ -466,3 +468,56 @@ class TestOrchestratorRetryMode:
             # Results should be the original successful results
             assert len(results) == 1
             assert results[0].scan_successful is True
+
+
+class TestCLIValidation:
+    """Test argument validation for --retry-failures in GaugePlugin._run_scan()."""
+
+    def test_retry_and_resume_mutually_exclusive(self, tmp_path):
+        """--retry-failures and --resume are mutually exclusive."""
+        from forge_gauge.plugin import GaugePlugin
+
+        checkpoint = tmp_path / "checkpoint.json"
+        checkpoint.write_text('{"version": "2.0", "results": []}')
+
+        plugin = GaugePlugin()
+        ctx = MagicMock()
+        result = plugin._run_scan(
+            {
+                "retry_failures": True,
+                "resume": True,
+                "checkpoint_file": str(checkpoint),
+                "with_all": False,
+            },
+            ctx,
+        )
+        assert result.status == ResultStatus.FAILURE
+
+    def test_skip_permanent_requires_retry_failures(self):
+        """--skip-permanent-failures requires --retry-failures."""
+        from forge_gauge.plugin import GaugePlugin
+
+        plugin = GaugePlugin()
+        ctx = MagicMock()
+        result = plugin._run_scan(
+            {"retry_failures": False, "skip_permanent_failures": True, "with_all": False},
+            ctx,
+        )
+        assert result.status == ResultStatus.FAILURE
+
+    def test_retry_failures_requires_checkpoint(self, tmp_path):
+        """--retry-failures requires checkpoint file to exist."""
+        from forge_gauge.plugin import GaugePlugin
+
+        plugin = GaugePlugin()
+        ctx = MagicMock()
+        result = plugin._run_scan(
+            {
+                "retry_failures": True,
+                "resume": False,
+                "checkpoint_file": str(tmp_path / "nonexistent.json"),
+                "with_all": False,
+            },
+            ctx,
+        )
+        assert result.status == ResultStatus.FAILURE
