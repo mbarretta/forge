@@ -4,9 +4,7 @@ Integration tests for Python package coverage checking.
 Tests coverage checking against common Python libraries.
 """
 
-import argparse
 import pytest
-from unittest.mock import Mock, patch
 
 from forge_coverage import check_coverage
 

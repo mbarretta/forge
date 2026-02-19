@@ -6,6 +6,8 @@ FORGE consolidates multiple field engineering tools into a single, consistent in
 
 ## Available Tools
 
+### Built-in Plugins
+
 ### 🔍 gauge - Container Vulnerability Assessment
 Scan container images for vulnerabilities and generate comprehensive security assessment reports.
 
@@ -29,6 +31,40 @@ Verify that customer organization images were authentically delivered by Chaingu
 - Base digest provenance tracking
 - Customer-only or full verification modes
 - CSV report generation
+
+### External Plugin Support
+
+FORGE supports external plugins from git repositories (including private GitHub repos). External plugins can be installed, updated, and managed independently from built-in plugins.
+
+**Key Features:**
+- Install plugins from private GitHub repositories
+- Independent plugin lifecycle management
+- Git-based version pinning (tags, branches, commits)
+- Support for both native plugins and wrappers
+- Uses standard git authentication (SSH keys or tokens)
+
+**Commands:**
+```bash
+# List available external plugins
+forge plugin list
+
+# Install external plugin
+forge plugin install my-plugin
+
+# Update external plugin
+forge plugin update my-plugin
+
+# Update all external plugins
+forge plugin update --all
+
+# Remove external plugin
+forge plugin remove my-plugin
+```
+
+**Learn more:**
+- [External Plugin Development Guide](docs/EXTERNAL_PLUGIN_GUIDE.md)
+- [Wrapper Templates](docs/WRAPPER_TEMPLATE.md)
+- [Authentication Setup](docs/AUTHENTICATION.md)
 
 ---
 
@@ -303,11 +339,12 @@ FORGE uses a plugin-based architecture that allows tools to work identically in 
 ### Components
 
 - **forge-core**: Plugin protocol (`ToolPlugin`), shared utilities
-- **forge-cli**: CLI dispatcher with auto-generated argparse
+- **forge-cli**: CLI dispatcher with auto-generated argparse and plugin manager
 - **forge-api**: FastAPI service with ARQ workers and Redis
 - **forge-ui**: React SPA with real-time WebSocket updates
-- **forge-gauge**: Container vulnerability scanning plugin
-- **forge-provenance**: Image delivery verification plugin
+- **forge-gauge**: Container vulnerability scanning plugin (built-in)
+- **forge-provenance**: Image delivery verification plugin (built-in)
+- **External plugins**: Plugins from git repositories (managed via `forge plugin` commands)
 
 ### Plugin Protocol
 
@@ -428,8 +465,14 @@ FORGE includes several built-in commands in addition to plugins:
 # Show all tools and versions
 forge version
 
-# Update FORGE and plugins
+# Update FORGE and built-in plugins
 forge update
+
+# Manage external plugins
+forge plugin list
+forge plugin install <name>
+forge plugin update <name>
+forge plugin remove <name>
 
 # Start API server
 forge serve
@@ -437,6 +480,7 @@ forge serve
 # Get help
 forge --help
 forge <tool> --help
+forge plugin --help
 ```
 
 ---

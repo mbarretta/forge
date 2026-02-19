@@ -637,11 +637,11 @@ def generate_sql(
     })
     if generation and not generation.isalnum():
         raise ValueError("generation must be alphanumeric")
-    if arch and not arch in SUPPORTED_ARCHITECTURES:
+    if arch and arch not in SUPPORTED_ARCHITECTURES:
         raise ValueError("arch must be: " + " or ".join(SUPPORTED_ARCHITECTURES))
-    if python_version and not python_version in SUPPORTED_PYTHON_VERSIONS:
+    if python_version and python_version not in SUPPORTED_PYTHON_VERSIONS:
         raise ValueError("python_version must be one of:" + ", ".join(SUPPORTED_PYTHON_VERSIONS))
-    if manylinux_variant and not manylinux_variant in SUPPORTED_MANYLINUX_VARIANTS:
+    if manylinux_variant and manylinux_variant not in SUPPORTED_MANYLINUX_VARIANTS:
         raise ValueError("manylinux_variant must be one of: ", ", ".join(SUPPORTED_MANYLINUX_VARIANTS))
 
     arch_filter = (f"AND (a.properties ->> 'architecture' IS NULL OR a.properties ->> 'architecture' = '{arch}')"
@@ -867,7 +867,7 @@ def display_group_status(group: dict) -> None:
     not_found = status_counts.get("not_in_pypi", 0)
     effective_total = total - excluded - not_found
 
-    print(f"\nRequests Summary:")
+    print("\nRequests Summary:")
     print(f"      Total: {total}")
     print(f"      Found: {found}/{total} ({found * 100 // total if total > 0 else 0}%)")
     print(f"  Effective: {found}/{effective_total} ({found * 100 // effective_total if effective_total > 0 else 0}%)"
@@ -1253,7 +1253,7 @@ def handle_api_mode(args) -> None:
 
         if existing_groups:
             print(f"Found existing requests group(s) for issue: {args.issue}")
-            print(f"Not creating a new group. Displaying existing group(s):\n")
+            print("Not creating a new group. Displaying existing group(s):\n")
 
             for i, group in enumerate(existing_groups):
                 if len(existing_groups) > 1:
@@ -1305,14 +1305,14 @@ def handle_api_mode(args) -> None:
             print(f"\nSuccessfully appended all {len(chunks) - 1} additional chunk(s)")
 
         # Fetch final group status
-        print(f"\nFetching final group status...")
+        print("\nFetching final group status...")
         headers = {"Authorization": f"Bearer {token}"}
         get_url = f"{args.api_url.rstrip('/')}/v1/requests-groups/{group_id}"
         get_response = requests.get(get_url, headers=headers, timeout=30)
         get_response.raise_for_status()
         final_group = get_response.json()
 
-        print(f"\nSuccessfully created and populated requests group:")
+        print("\nSuccessfully created and populated requests group:")
         display_group_status(final_group)
 
     elif is_refresh_mode:
@@ -1368,14 +1368,14 @@ def handle_api_mode(args) -> None:
         print(f"\nRefresh completed: {result.get('message', 'Success')}")
 
         # Fetch and display updated group status
-        print(f"\nFetching updated group status...")
+        print("\nFetching updated group status...")
         headers = {"Authorization": f"Bearer {token}"}
         get_url = f"{args.api_url.rstrip('/')}/v1/requests-groups/{group_id}"
         get_response = requests.get(get_url, headers=headers, timeout=30)
         get_response.raise_for_status()
         updated_group = get_response.json()
 
-        print(f"\nUpdated group status:")
+        print("\nUpdated group status:")
         display_group_status(updated_group)
 
     else:

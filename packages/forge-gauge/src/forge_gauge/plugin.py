@@ -2,32 +2,33 @@
 
 from __future__ import annotations
 
-import argparse
 import logging
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Any
 
 from forge_core.context import ExecutionContext
 from forge_core.deps import assert_dependencies
-from forge_core.plugin import ToolParam, ToolResult, ResultStatus
+from forge_core.plugin import ResultStatus, ToolParam, ToolResult
 
 from forge_gauge.constants import (
-    __version__,
-    DEFAULT_HOURS_PER_VULNERABILITY,
-    DEFAULT_HOURLY_RATE,
-    DEFAULT_MAX_WORKERS,
-    DEFAULT_PLATFORM,
     DEFAULT_CHPS_MAX_WORKERS,
-    DEFAULT_MATCH_CONFIDENCE,
-    DEFAULT_UPSTREAM_CONFIDENCE,
+    DEFAULT_HOURLY_RATE,
+    DEFAULT_HOURS_PER_VULNERABILITY,
     DEFAULT_LLM_CONFIDENCE,
     DEFAULT_LLM_MODEL,
+    DEFAULT_MATCH_CONFIDENCE,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_PLATFORM,
+    DEFAULT_UPSTREAM_CONFIDENCE,
+    __version__,
 )
 
 logger = logging.getLogger(__name__)
 
 # External CLI tools required by gauge
-REQUIRED_TOOLS: list[str] = ["crane", "grype", "chainctl", "cosign"]
+REQUIRED_TOOLS: list[str] = ["gauge", "crane", "grype", "chainctl", "cosign"]
 
 
 class GaugePlugin:
@@ -63,7 +64,10 @@ class GaugePlugin:
             ),
             ToolParam(
                 name="output",
-                description="Output types: vuln_summary (HTML), cost_analysis (XLSX), pricing, pricing:html, pricing:txt (comma-separated). Scan only.",
+                description=(
+                    "Output types: vuln_summary (HTML), cost_analysis (XLSX), "
+                    "pricing, pricing:html, pricing:txt (comma-separated). Scan only."
+                ),
             ),
             ToolParam(
                 name="output-dir",
@@ -268,16 +272,25 @@ class GaugePlugin:
                 description="Disable automatic GCR authentication",
                 type="bool",
             ),
+            ToolParam(
+                name="verbose",
+                description="Enable verbose logging",
+                type="bool",
+            ),
+            ToolParam(
+                name="disable-mapping-auto-population",
+                description="Disable auto-populating manual upstream mappings",
+                type="bool",
+            ),
         ]
 
     def run(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
         """Execute gauge command."""
-        # Check external dependencies
+        self._seed_config()
         assert_dependencies(REQUIRED_TOOLS)
 
         command = args["command"]
 
-        # Validate command-specific requirements
         if command == "scan":
             if not args.get("input") and not args.get("organization"):
                 return ToolResult(
@@ -298,145 +311,134 @@ class GaugePlugin:
                 summary=f"Unknown command: {command}",
             )
 
+    def _seed_config(self) -> None:
+        """Copy bundled config files to ~/.gauge/config/ if not already present."""
+        gauge_config_dir = Path.home() / ".gauge" / "config"
+        gauge_config_dir.mkdir(parents=True, exist_ok=True)
+
+        # Installed package: config/ lives alongside plugin.py inside the wheel.
+        # Editable/dev install: config/ is at the package root (packages/forge-gauge/config/).
+        bundled_config = Path(__file__).parent / "config"
+        if not bundled_config.is_dir():
+            bundled_config = Path(__file__).parent.parent.parent / "config"
+        if not bundled_config.is_dir():
+            return
+
+        for src_file in bundled_config.iterdir():
+            if src_file.is_file():
+                dest_file = gauge_config_dir / src_file.name
+                if not dest_file.exists():
+                    shutil.copy2(src_file, dest_file)
+                    logger.debug("Seeded config file: %s", dest_file)
+
+    def _build_cmd(self, subcommand: str, args: dict[str, Any]) -> list[str]:
+        """Build gauge CLI command from FORGE args dict.
+
+        Args dict keys use underscores (argparse convention); we convert back to
+        hyphens to match gauge's CLI flags (e.g. retry_failures → --retry-failures).
+        """
+        cmd = ["gauge", subcommand]
+
+        for key, value in args.items():
+            if key == "command":
+                continue
+            flag = f"--{key.replace('_', '-')}"
+            if isinstance(value, bool):
+                if value:
+                    cmd.append(flag)
+            elif value is not None:
+                cmd.extend([flag, str(value)])
+
+        return cmd
+
     def _run_scan(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
         """Execute gauge scan command."""
-        from forge_gauge.core.orchestrator import GaugeOrchestrator
-
-        # Convert args dict to argparse Namespace
-        scan_args = self._args_to_namespace(args)
-
-        # Handle --with-all flag
-        if scan_args.with_all:
-            scan_args.with_chps = True
-            scan_args.with_fips = True
-            scan_args.with_kevs = True
+        # Validate mutually exclusive flags before delegating to subprocess
+        if args.get("retry_failures") and args.get("resume"):
+            return ToolResult(
+                status=ResultStatus.FAILURE,
+                summary="--retry-failures and --resume are mutually exclusive",
+            )
+        if args.get("skip_permanent_failures") and not args.get("retry_failures"):
+            return ToolResult(
+                status=ResultStatus.FAILURE,
+                summary="--skip-permanent-failures requires --retry-failures",
+            )
+        if args.get("retry_failures"):
+            checkpoint = Path(args.get("checkpoint_file", ".gauge_checkpoint.json"))
+            if not checkpoint.exists():
+                return ToolResult(
+                    status=ResultStatus.FAILURE,
+                    summary=f"--retry-failures requires existing checkpoint file: {checkpoint}",
+                )
 
         ctx.progress(0.0, "Starting vulnerability scan")
 
-        try:
-            orchestrator = GaugeOrchestrator(scan_args)
-            orchestrator.run()
+        cmd = self._build_cmd("scan", args)
+        result = subprocess.run(cmd, text=True)
 
-            ctx.progress(1.0, "Scan complete")
-
-            # Collect output artifacts
-            artifacts = {}
-            output_dir = Path(args.get("output-dir", "."))
-
-            # Look for generated files
-            for pattern in ["*.html", "*.xlsx", "*.yaml", "*.csv"]:
-                for file in output_dir.glob(pattern):
-                    if file.is_file() and file.stat().st_size > 0:
-                        artifacts[file.stem] = str(file.resolve())
-
-            return ToolResult(
-                status=ResultStatus.SUCCESS,
-                summary="Vulnerability scan completed successfully",
-                data={"command": "scan"},
-                artifacts=artifacts,
-            )
-        except Exception as e:
-            logger.exception("Scan command failed")
+        if result.returncode != 0:
             return ToolResult(
                 status=ResultStatus.FAILURE,
-                summary=f"Scan failed: {str(e)}",
+                summary=result.stderr or f"gauge scan failed with exit code {result.returncode}",
             )
+
+        ctx.progress(1.0, "Scan complete")
+
+        # Collect output artifacts
+        artifacts: dict[str, str] = {}
+        output_dir = Path(args.get("output_dir", "output"))
+        for pattern in ["*.html", "*.xlsx", "*.yaml", "*.csv"]:
+            for file in output_dir.glob(pattern):
+                if file.is_file() and file.stat().st_size > 0:
+                    artifacts[file.stem] = str(file.resolve())
+
+        return ToolResult(
+            status=ResultStatus.SUCCESS,
+            summary="Vulnerability scan completed successfully",
+            data={"command": "scan"},
+            artifacts=artifacts,
+        )
 
     def _run_match(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
         """Execute gauge match command."""
-        from forge_gauge.commands.match import match_images
-
-        match_args = self._args_to_namespace(args)
-        input_file = Path(args["input"])
-
-        if not input_file.exists():
-            return ToolResult(
-                status=ResultStatus.FAILURE,
-                summary=f"Input file not found: {input_file}",
-            )
-
         ctx.progress(0.0, "Starting image matching")
 
-        # Parse known registries
-        known_registries = None
-        if args.get("known-registries"):
-            known_registries = [
-                r.strip() for r in args["known-registries"].split(",") if r.strip()
-            ]
+        cmd = self._build_cmd("match", args)
+        result = subprocess.run(cmd, text=True)
 
-        try:
-            output_dir = Path(args.get("output-dir", "output"))
-            output_file = output_dir / "matched-log.yaml"
-
-            matched_images, unmatched_images = match_images(
-                input_file=input_file,
-                output_file=output_file,
-                output_dir=output_dir,
-                min_confidence=args.get("min-confidence", DEFAULT_MATCH_CONFIDENCE),
-                interactive=args.get("interactive", False),
-                dfc_mappings_file=args.get("dfc-mappings-file"),
-                cache_dir=args.get("cache-dir"),
-                find_upstream=not args.get("skip-public-repo-search", False),
-                upstream_confidence=args.get("upstream-confidence", DEFAULT_UPSTREAM_CONFIDENCE),
-                upstream_mappings_file=args.get("upstream-mappings-file"),
-                enable_llm_matching=not args.get("disable-llm-matching", False),
-                llm_model=args.get("llm-model", DEFAULT_LLM_MODEL),
-                llm_confidence_threshold=args.get("llm-confidence-threshold", DEFAULT_LLM_CONFIDENCE),
-                anthropic_api_key=args.get("anthropic-api-key"),
-                generate_dfc_pr=args.get("generate-dfc-pr", False),
-                github_token=args.get("github-token"),
-                known_registries=known_registries,
-                prefer_fips=args.get("with-fips", False),
-                customer_name=args.get("customer", "Customer"),
-                always_match_cgr_latest=args.get("always-match-cgr-latest", False),
-            )
-
-            ctx.progress(1.0, "Matching complete")
-
-            return ToolResult(
-                status=ResultStatus.SUCCESS if not unmatched_images else ResultStatus.PARTIAL,
-                summary=f"Matched {len(matched_images)} images, {len(unmatched_images)} unmatched",
-                data={
-                    "matched": len(matched_images),
-                    "unmatched": len(unmatched_images),
-                },
-                artifacts={"match_log": str(output_file.resolve())},
-            )
-        except Exception as e:
-            logger.exception("Match command failed")
+        if result.returncode != 0:
             return ToolResult(
                 status=ResultStatus.FAILURE,
-                summary=f"Match failed: {str(e)}",
+                summary=result.stderr or f"gauge match failed with exit code {result.returncode}",
             )
 
-    def _args_to_namespace(self, args: dict[str, Any]) -> argparse.Namespace:
-        """Convert args dict to argparse Namespace for compatibility with gauge internals."""
-        ns = argparse.Namespace()
+        ctx.progress(1.0, "Matching complete")
 
-        # Parameters that should be Path objects
-        path_params = {
-            "output_dir", "pricing_policy", "exec_summary", "appendix",
-            "cache_dir", "checkpoint_file", "upstream_mappings_file",
-            "dfc_mappings_file", "gcr_credentials"
-        }
+        # Parse matched-log.yaml for matched/unmatched counts
+        output_dir = Path(args.get("output_dir", "output"))
+        output_file = output_dir / "matched-log.yaml"
+        matched = 0
+        unmatched = 0
+        if output_file.exists():
+            try:
+                import yaml
 
-        # Set defaults for gauge internal parameters not exposed in FORGE
-        ns.disable_mapping_auto_population = False
-        ns.verbose = False
+                with open(output_file) as f:
+                    data = yaml.safe_load(f)
+                if isinstance(data, dict):
+                    matched = len(data.get("matched", []))
+                    unmatched = len(data.get("unmatched", []))
+            except Exception:
+                pass
 
-        # Map all parameters
-        for key, value in args.items():
-            # Convert hyphenated names to underscored (argparse convention)
-            attr_name = key.replace("-", "_")
+        artifacts: dict[str, str] = {}
+        if output_file.exists():
+            artifacts["match_log"] = str(output_file.resolve())
 
-            # Handle parameter name mappings
-            if attr_name == "customer":
-                attr_name = "customer_name"
-
-            # Convert path strings to Path objects for compatibility
-            if attr_name in path_params and value is not None and isinstance(value, str):
-                value = Path(value)
-
-            setattr(ns, attr_name, value)
-
-        return ns
+        return ToolResult(
+            status=ResultStatus.SUCCESS if unmatched == 0 else ResultStatus.PARTIAL,
+            summary=f"Matched {matched} images, {unmatched} unmatched",
+            data={"matched": matched, "unmatched": unmatched},
+            artifacts=artifacts,
+        )

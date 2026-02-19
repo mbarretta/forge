@@ -47,7 +47,7 @@ async def run_tool(
 
     # Mark job as running
     now = datetime.now(timezone.utc).isoformat()
-    await redis.hset(
+    await redis.hset(  # type: ignore[misc]
         f"{JOB_KEY}{job_id}",
         mapping={
             "status": "running",
@@ -71,7 +71,7 @@ async def run_tool(
             "status": "running",
         }
         await redis.publish(f"{JOB_PROGRESS}{job_id}", json.dumps(event))
-        await redis.hset(
+        await redis.hset(  # type: ignore[misc]
             f"{JOB_KEY}{job_id}",
             mapping={
                 "progress": str(fraction),
@@ -131,7 +131,7 @@ async def run_tool(
     completed_at = datetime.now(timezone.utc).isoformat()
     status = "completed" if result.status == ResultStatus.SUCCESS else "failed"
 
-    await redis.hset(
+    await redis.hset(  # type: ignore[misc]
         f"{JOB_KEY}{job_id}",
         mapping={
             "status": status,
@@ -160,7 +160,7 @@ async def run_tool(
 
 async def _fail_job(redis: ArqRedis, job_id: str, error: str) -> None:
     """Mark a job as failed."""
-    await redis.hset(
+    await redis.hset(  # type: ignore[misc]
         f"{JOB_KEY}{job_id}",
         mapping={
             "status": "failed",

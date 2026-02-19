@@ -42,12 +42,14 @@ def show_help(plugins: dict) -> None:
     print(f"  {'update':<20} Update FORGE and all plugins to latest")
     print(f"  {'version':<20} Show FORGE and plugin versions")
     print(f"  {'serve':<20} Start the web server (requires forge-api)")
+    print(f"  {'plugin':<20} Manage external plugins (install, update, list)")
     print()
     print("Global options:")
     print("  --version, -V        Show version (short)")
     print("  --help, -h           Show this help")
     print()
     print("Use 'forge <tool> --help' for tool-specific options.")
+    print("Use 'forge plugin --help' for plugin management.")
 
 
 def _show_version(plugins: dict) -> None:
@@ -111,6 +113,85 @@ def _launch_server(argv: list[str]) -> None:
     uvicorn.run(app, host=args.host, port=args.port, reload=args.reload)
 
 
+def _manage_plugins(argv: list[str]) -> int:
+    """Manage external plugins."""
+    from forge_cli.plugin_manager import PluginManager, format_plugin_list
+
+    parser = argparse.ArgumentParser(
+        prog="forge plugin",
+        description="Manage external FORGE plugins from git repositories",
+    )
+    subparsers = parser.add_subparsers(dest="subcommand", help="Plugin management commands")
+
+    # list command
+    list_parser = subparsers.add_parser("list", help="List available external plugins")
+    list_parser.add_argument(
+        "--tag", help="Filter plugins by tag (e.g., security, compliance)"
+    )
+    list_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Show detailed plugin information"
+    )
+
+    # install command
+    install_parser = subparsers.add_parser(
+        "install", help="Install an external plugin from the registry"
+    )
+    install_parser.add_argument("name", help="Plugin name from registry")
+    install_parser.add_argument(
+        "--ref", help="Git ref (tag/branch/commit) to install (overrides registry default)"
+    )
+    install_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero if any system dependency fails to install (useful for CI)",
+    )
+
+    # update command
+    update_parser = subparsers.add_parser("update", help="Update an external plugin")
+    update_parser.add_argument("name", nargs="?", help="Plugin name (omit to update all)")
+    update_parser.add_argument(
+        "--all", action="store_true", help="Update all external plugins"
+    )
+    update_parser.add_argument(
+        "--ref", help="Git ref to update to (overrides registry default)"
+    )
+    update_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero if any system dependency fails to install (useful for CI)",
+    )
+
+    # remove command
+    remove_parser = subparsers.add_parser("remove", help="Remove an external plugin")
+    remove_parser.add_argument("name", help="Plugin name from registry")
+
+    args = parser.parse_args(argv)
+
+    if not args.subcommand:
+        parser.print_help()
+        return 0
+
+    manager = PluginManager()
+
+    if args.subcommand == "list":
+        plugins = manager.list_available(tag_filter=args.tag)
+        print(format_plugin_list(plugins, verbose=args.verbose))
+        return 0
+
+    if args.subcommand == "install":
+        return manager.install(args.name, ref=args.ref, strict=args.strict)
+
+    if args.subcommand == "update":
+        if args.all or not args.name:
+            return manager.update_all(strict=args.strict)
+        return manager.update(args.name, ref=args.ref, strict=args.strict)
+
+    if args.subcommand == "remove":
+        return manager.remove(args.name)
+
+    return 0
+
+
 def main() -> None:
     """Main entry point."""
     plugins = discover_plugins()
@@ -143,6 +224,9 @@ def main() -> None:
         _launch_server(sys.argv[2:])
         return
 
+    if command == "plugin":
+        sys.exit(_manage_plugins(sys.argv[2:]))
+
     # Tool dispatch
     if command not in plugins:
         print(f"Unknown tool: {command}")
@@ -163,7 +247,7 @@ def main() -> None:
         if len(sys.argv) < 3 or sys.argv[2].startswith("-"):
             # No subcommand provided or looks like a flag
             print(f"Error: {plugin.name} requires a subcommand")
-            print(f"Available commands: {', '.join(subcommand_param.choices)}")
+            print(f"Available commands: {', '.join(subcommand_param.choices or [])}")
             print(f"\nUsage: forge {plugin.name} <command> [options]")
             sys.exit(1)
 

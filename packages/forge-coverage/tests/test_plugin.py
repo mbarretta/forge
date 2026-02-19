@@ -4,7 +4,6 @@ Tests for the coverage plugin wrapper.
 Tests plugin loading, parameter validation, and args conversion.
 """
 
-import pytest
 from pathlib import Path
 
 from forge_core.plugin import ResultStatus, ToolParam
