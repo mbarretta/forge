@@ -48,20 +48,22 @@ external_plugins:
   #   private: true
 
   gauge:
-    package: "forge-gauge"
-    source: "git+https://github.com/chainguard/forge.git#subdirectory=packages/forge-gauge"
-    ref: "main"
-    description: "Container vulnerability scanning and image matching (wraps chainguard-dev/gauge)"
-    plugin_type: "wrapper"
+    package: "gauge"
+    source: "git+https://github.com/chainguard-dev/gauge.git"
+    # TODO: update to stable tag (e.g. v2.2.0) once chainguard-dev/gauge#24 is merged and tagged
+    ref: "5f67880c1c49dc7dc2d107ea75d45323edbc3705"
+    description: "Container vulnerability scanning and image matching"
+    plugin_type: "native"
     tags: [security, scanning, vulnerability, matching]
-    private: true
+    private: false
 
   provenance:
-    package: "forge-provenance"
-    source: "git+https://github.com/chainguard/forge.git#subdirectory=packages/forge-provenance"
-    ref: "main"
-    description: "Verify Chainguard image provenance and delivery authenticity (wraps mbarretta/cgr_verify_provenance)"
-    plugin_type: "wrapper"
+    package: "verify-provenance"
+    source: "git+https://github.com/mbarretta/cgr_verify_provenance.git"
+    # TODO: update to stable tag (e.g. v0.2.0) once mbarretta/cgr_verify_provenance#1 is merged and tagged
+    ref: "22c892f1ac3643c23dd3e76898f71dce7fb78632"
+    description: "Verify Chainguard image provenance and delivery authenticity"
+    plugin_type: "native"
     tags: [security, provenance, verification, authenticity]
     private: true
 

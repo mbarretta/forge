@@ -31,8 +31,6 @@ members = [
     "packages/forge-cli",
     "packages/forge-api",
     "packages/forge-hello",
-    "packages/forge-gauge",
-    "packages/forge-provenance",
     "packages/forge-coverage",
     # TODO: Add when created:
     # "packages/forge-ils",
