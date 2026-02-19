@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib.metadata
 import logging
-from typing import Any
 
 from forge_core.plugin import ToolPlugin
 

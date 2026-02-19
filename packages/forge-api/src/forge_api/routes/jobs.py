@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.requests import Request
 
-from forge_api.models import JobCreateRequest, JobResponse, JobStatus, ProgressEvent
+from forge_api.models import JobCreateRequest, JobResponse, JobStatus
 from forge_core.registry import discover_plugins
 
 router = APIRouter()

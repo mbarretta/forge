@@ -3,10 +3,9 @@
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
-import pytest
-
 from forge_core.plugin import ResultStatus
-from forge_gauge.plugin import GaugePlugin, REQUIRED_TOOLS
+
+from forge_gauge.plugin import REQUIRED_TOOLS, GaugePlugin
 
 
 class TestRequiredTools:

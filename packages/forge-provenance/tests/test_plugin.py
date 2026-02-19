@@ -4,7 +4,8 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 from forge_core.plugin import ResultStatus
-from forge_provenance.plugin import ProvenancePlugin, REQUIRED_TOOLS
+
+from forge_provenance.plugin import REQUIRED_TOOLS, ProvenancePlugin
 
 
 class TestRequiredTools:

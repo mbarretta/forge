@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
