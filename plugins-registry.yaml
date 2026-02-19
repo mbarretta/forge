@@ -51,7 +51,7 @@ external_plugins:
     package: "gauge"
     source: "git+https://github.com/chainguard-dev/gauge.git"
     # TODO: update to stable tag (e.g. v2.2.0) once chainguard-dev/gauge#24 is merged and tagged
-    ref: "5f67880c1c49dc7dc2d107ea75d45323edbc3705"
+    ref: "4f28a3d7d8db7c987a9d704c476f88e22b585012"
     description: "Container vulnerability scanning and image matching"
     plugin_type: "native"
     tags: [security, scanning, vulnerability, matching]
