@@ -6,6 +6,7 @@ Uses UV for git-based package installation with support for private GitHub repos
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -27,9 +28,12 @@ class PluginManager:
                           in the FORGE root directory.
         """
         if registry_path is None:
-            # Walk up from this file to find the FORGE root containing the registry.
-            # Expected layout: packages/forge-cli/src/forge_cli/plugin_manager.py
-            registry_path = Path(__file__).parents[4] / "plugins-registry.yaml"
+            if env_path := os.environ.get("FORGE_PLUGIN_REGISTRY"):
+                registry_path = Path(env_path)
+            else:
+                # Walk up from this file to find the FORGE root containing the registry.
+                # Expected layout: packages/forge-cli/src/forge_cli/plugin_manager.py
+                registry_path = Path(__file__).parents[4] / "plugins-registry.yaml"
 
         self.registry_path = registry_path
         self._registry: dict[str, dict[str, Any]] | None = None
@@ -103,12 +107,13 @@ class PluginManager:
 
         return registry
 
-    def install(self, name: str, ref: str | None = None) -> int:
+    def install(self, name: str, ref: str | None = None, strict: bool = False) -> int:
         """Install an external plugin from the registry.
 
         Args:
             name: Plugin name from registry.
             ref: Optional git ref (tag/branch/commit) to install. Overrides registry default.
+            strict: If True, return non-zero when any system dependency fails to install.
 
         Returns:
             Exit code: 0 on success, non-zero on failure.
@@ -173,15 +178,22 @@ class PluginManager:
                     for line in r.error_message.splitlines():
                         print(f"    {line}")
             print("\nThe plugin is installed but may not function until the above are resolved.")
+            if strict:
+                print(
+                    "\nError: system dependency installation failed (--strict mode)",
+                    file=sys.stderr,
+                )
+                return 1
 
         return 0
 
-    def update(self, name: str, ref: str | None = None) -> int:
+    def update(self, name: str, ref: str | None = None, strict: bool = False) -> int:
         """Update an external plugin to the latest version.
 
         Args:
             name: Plugin name from registry.
             ref: Optional git ref to update to. Overrides registry default.
+            strict: If True, return non-zero when any system dependency fails to install.
 
         Returns:
             Exit code: 0 on success, non-zero on failure.
@@ -199,10 +211,13 @@ class PluginManager:
             return 1
 
         # Then install the updated version
-        return self.install(name, ref)
+        return self.install(name, ref, strict=strict)
 
-    def update_all(self) -> int:
+    def update_all(self, strict: bool = False) -> int:
         """Update all installed external plugins.
+
+        Args:
+            strict: If True, return non-zero when any system dependency fails to install.
 
         Returns:
             Exit code: 0 if all succeeded, non-zero if any failed.
@@ -217,7 +232,7 @@ class PluginManager:
 
         failed = []
         for name in sorted(registry):
-            result = self.update(name)
+            result = self.update(name, strict=strict)
             if result != 0:
                 failed.append(name)
             print()  # Blank line between updates
@@ -226,7 +241,7 @@ class PluginManager:
             print(f"\n✗ Failed to update: {', '.join(failed)}", file=sys.stderr)
             return 1
 
-        print(f"\n✓ All plugins updated successfully")
+        print("\n✓ All plugins updated successfully")
         return 0
 
     def remove(self, name: str) -> int:

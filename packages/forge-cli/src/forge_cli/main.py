@@ -140,6 +140,11 @@ def _manage_plugins(argv: list[str]) -> int:
     install_parser.add_argument(
         "--ref", help="Git ref (tag/branch/commit) to install (overrides registry default)"
     )
+    install_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero if any system dependency fails to install (useful for CI)",
+    )
 
     # update command
     update_parser = subparsers.add_parser("update", help="Update an external plugin")
@@ -149,6 +154,11 @@ def _manage_plugins(argv: list[str]) -> int:
     )
     update_parser.add_argument(
         "--ref", help="Git ref to update to (overrides registry default)"
+    )
+    update_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero if any system dependency fails to install (useful for CI)",
     )
 
     # remove command
@@ -169,12 +179,12 @@ def _manage_plugins(argv: list[str]) -> int:
         return 0
 
     if args.subcommand == "install":
-        return manager.install(args.name, ref=args.ref)
+        return manager.install(args.name, ref=args.ref, strict=args.strict)
 
     if args.subcommand == "update":
         if args.all or not args.name:
-            return manager.update_all()
-        return manager.update(args.name, ref=args.ref)
+            return manager.update_all(strict=args.strict)
+        return manager.update(args.name, ref=args.ref, strict=args.strict)
 
     if args.subcommand == "remove":
         return manager.remove(args.name)
@@ -237,7 +247,7 @@ def main() -> None:
         if len(sys.argv) < 3 or sys.argv[2].startswith("-"):
             # No subcommand provided or looks like a flag
             print(f"Error: {plugin.name} requires a subcommand")
-            print(f"Available commands: {', '.join(subcommand_param.choices)}")
+            print(f"Available commands: {', '.join(subcommand_param.choices or [])}")
             print(f"\nUsage: forge {plugin.name} <command> [options]")
             sys.exit(1)
 

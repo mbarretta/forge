@@ -34,10 +34,16 @@ CHAINGUARD_IMAGE_COST = 29000
 # ============================================================================
 
 DEFAULT_MAX_WORKERS = 1
-"""Default number of concurrent workers for parallel scanning (reduced from 2 to prevent Docker daemon OOM crashes)."""
+"""Default number of concurrent workers for parallel scanning.
+
+Reduced from 2 to prevent Docker daemon OOM crashes.
+"""
 
 DEFAULT_CHPS_MAX_WORKERS = 1
-"""Default number of concurrent workers for parallel CHPS scanning (reduced to prevent daemon contention)."""
+"""Default number of concurrent workers for parallel CHPS scanning.
+
+Reduced to prevent daemon contention.
+"""
 
 # ============================================================================
 # Image Matching Configuration
@@ -214,7 +220,7 @@ KEV_CATALOG_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploite
 CHAINGUARD_API_URL = "https://console-api.enforce.dev"
 """Base URL for Chainguard API services."""
 
-CHPS_SCORER_IMAGE = "ghcr.io/chps-dev/chps-scorer@sha256:d66a901f1e5ae488dedf2bd97d5e95c17c1d0d5d58290a0b7437d3444f6837be"
+CHPS_SCORER_IMAGE = "ghcr.io/chps-dev/chps-scorer@sha256:d66a901f1e5ae488dedf2bd97d5e95c17c1d0d5d58290a0b7437d3444f6837be"  # noqa: E501
 """Docker image for CHPS (Container Hardening and Provenance Scanner).
 
 SECURITY NOTE: This image is pinned to a specific digest for security.
@@ -223,7 +229,7 @@ To update, pull the latest image and update the digest:
   docker inspect ghcr.io/chps-dev/chps-scorer:latest --format='{{index .RepoDigests 0}}'
 """
 
-CHPS_SCORER_EXPECTED_DIGEST = "sha256:d66a901f1e5ae488dedf2bd97d5e95c17c1d0d5d58290a0b7437d3444f6837be"
+CHPS_SCORER_EXPECTED_DIGEST = "sha256:d66a901f1e5ae488dedf2bd97d5e95c17c1d0d5d58290a0b7437d3444f6837be"  # noqa: E501
 """Expected digest for CHPS scorer image verification."""
 
 # ============================================================================

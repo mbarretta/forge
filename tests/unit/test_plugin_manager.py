@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock, patch
@@ -135,6 +136,46 @@ def test_install_returns_nonzero_on_uv_failure(tmp_path):
     assert rc == 1
 
 
+def test_install_strict_returns_nonzero_on_system_dep_failure(tmp_path, capsys):
+    manager = _make_manager(tmp_path, _make_registry(_plugin_with_system_deps()))
+
+    spec = SystemDepSpec(manager="go", package="github.com/org/go-tool@v1.2.3", binary="go-tool")
+    failure_result = SystemDepResult(
+        spec=spec,
+        already_installed=False,
+        success=False,
+        error_message="Go runtime not found.",
+    )
+
+    with patch.object(manager, "_run_uv", return_value=0):
+        with patch("forge_cli.plugin_manager.install_system_deps", return_value=[failure_result]):
+            with patch("forge_cli.plugin_manager.parse_system_deps", return_value=[spec]):
+                rc = manager.install("go-tool", strict=True)
+
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert "strict" in captured.err
+
+
+def test_install_strict_returns_0_when_no_system_dep_failures(tmp_path):
+    manager = _make_manager(tmp_path, _make_registry(_plugin_with_system_deps()))
+
+    spec = SystemDepSpec(manager="go", package="github.com/org/go-tool@v1.2.3", binary="go-tool")
+    success_result = SystemDepResult(
+        spec=spec,
+        already_installed=False,
+        success=True,
+        error_message=None,
+    )
+
+    with patch.object(manager, "_run_uv", return_value=0):
+        with patch("forge_cli.plugin_manager.install_system_deps", return_value=[success_result]):
+            with patch("forge_cli.plugin_manager.parse_system_deps", return_value=[spec]):
+                rc = manager.install("go-tool", strict=True)
+
+    assert rc == 0
+
+
 # ---------------------------------------------------------------------------
 # remove() — system_deps note
 # ---------------------------------------------------------------------------
@@ -161,6 +202,42 @@ def test_remove_no_note_for_plugin_without_system_deps(tmp_path, capsys):
     assert rc == 0
     captured = capsys.readouterr()
     assert "System dependencies" not in captured.out
+
+
+# ---------------------------------------------------------------------------
+# PluginManager registry path discovery
+# ---------------------------------------------------------------------------
+
+
+def test_registry_path_uses_env_var(tmp_path):
+    registry_data = _make_registry()
+    registry_file = tmp_path / "custom-registry.yaml"
+    registry_file.write_text(yaml.dump(registry_data))
+
+    with patch.dict(os.environ, {"FORGE_PLUGIN_REGISTRY": str(registry_file)}):
+        manager = PluginManager()  # no explicit path
+        plugins = manager.list_available()
+
+    assert "plain-plugin" in plugins
+
+
+def test_registry_path_env_var_takes_precedence_over_default(tmp_path):
+    custom_registry = _make_registry({"custom-plugin": {
+        "package": "forge-custom",
+        "source": "git+https://example.com/custom.git",
+        "description": "Custom plugin",
+        "plugin_type": "native",
+        "tags": [],
+        "private": False,
+    }})
+    registry_file = tmp_path / "env-registry.yaml"
+    registry_file.write_text(yaml.dump(custom_registry))
+
+    with patch.dict(os.environ, {"FORGE_PLUGIN_REGISTRY": str(registry_file)}):
+        manager = PluginManager()
+        plugins = manager.list_available()
+
+    assert "custom-plugin" in plugins
 
 
 # ---------------------------------------------------------------------------

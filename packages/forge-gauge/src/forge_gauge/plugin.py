@@ -10,19 +10,19 @@ from typing import Any
 
 from forge_core.context import ExecutionContext
 from forge_core.deps import assert_dependencies
-from forge_core.plugin import ToolParam, ToolResult, ResultStatus
+from forge_core.plugin import ResultStatus, ToolParam, ToolResult
 
 from forge_gauge.constants import (
-    __version__,
-    DEFAULT_HOURS_PER_VULNERABILITY,
-    DEFAULT_HOURLY_RATE,
-    DEFAULT_MAX_WORKERS,
-    DEFAULT_PLATFORM,
     DEFAULT_CHPS_MAX_WORKERS,
-    DEFAULT_MATCH_CONFIDENCE,
-    DEFAULT_UPSTREAM_CONFIDENCE,
+    DEFAULT_HOURLY_RATE,
+    DEFAULT_HOURS_PER_VULNERABILITY,
     DEFAULT_LLM_CONFIDENCE,
     DEFAULT_LLM_MODEL,
+    DEFAULT_MATCH_CONFIDENCE,
+    DEFAULT_MAX_WORKERS,
+    DEFAULT_PLATFORM,
+    DEFAULT_UPSTREAM_CONFIDENCE,
+    __version__,
 )
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,10 @@ class GaugePlugin:
             ),
             ToolParam(
                 name="output",
-                description="Output types: vuln_summary (HTML), cost_analysis (XLSX), pricing, pricing:html, pricing:txt (comma-separated). Scan only.",
+                description=(
+                    "Output types: vuln_summary (HTML), cost_analysis (XLSX), "
+                    "pricing, pricing:html, pricing:txt (comma-separated). Scan only."
+                ),
             ),
             ToolParam(
                 name="output-dir",

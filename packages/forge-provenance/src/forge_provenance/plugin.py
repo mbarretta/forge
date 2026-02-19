@@ -9,7 +9,7 @@ from typing import Any
 
 from forge_core.context import ExecutionContext
 from forge_core.deps import assert_dependencies
-from forge_core.plugin import ToolParam, ToolResult, ResultStatus
+from forge_core.plugin import ResultStatus, ToolParam, ToolResult
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,10 @@ class ProvenancePlugin:
         if result.returncode != 0:
             return ToolResult(
                 status=ResultStatus.FAILURE,
-                summary=result.stderr or f"verify-provenance failed with exit code {result.returncode}",
+                summary=(
+                    result.stderr
+                    or f"verify-provenance failed with exit code {result.returncode}"
+                ),
             )
 
         ctx.progress(1.0, "Verification complete")
