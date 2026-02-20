@@ -6,65 +6,55 @@ FORGE consolidates multiple field engineering tools into a single, consistent in
 
 ## Available Tools
 
-### Built-in Plugins
+FORGE ships with `hello` as a bundled example plugin. Field tools like **gauge** and **provenance** live in external repositories and are installed on-demand.
 
-### 🔍 gauge - Container Vulnerability Assessment
-Scan container images for vulnerabilities and generate comprehensive security assessment reports.
+### Discovering Available Plugins
 
-**Commands:**
-- `scan` - Vulnerability scanning with HTML/XLSX/YAML reports
-- `match` - Match alternative images to Chainguard equivalents
-
-**Key Features:**
-- Multi-format reports (HTML executive summaries, XLSX cost analysis)
-- AI-powered image matching with Claude
-- CHPS scoring, FIPS analysis, KEV data integration
-- Parallel scanning with caching and checkpointing
-- Integration with Grype, Chainguard API, GitHub
-
-### 🔐 provenance - Image Delivery Verification
-Verify that customer organization images were authentically delivered by Chainguard.
-
-**Key Features:**
-- Signature verification against Chainguard Enforce
-- Rekor transparency log validation
-- Base digest provenance tracking
-- Customer-only or full verification modes
-- CSV report generation
-
-### External Plugin Support
-
-FORGE supports external plugins from git repositories (including private GitHub repos). External plugins can be installed, updated, and managed independently from built-in plugins.
-
-**Key Features:**
-- Install plugins from private GitHub repositories
-- Independent plugin lifecycle management
-- Git-based version pinning (tags, branches, commits)
-- Support for both native plugins and wrappers
-- Uses standard git authentication (SSH keys or tokens)
-
-**Commands:**
 ```bash
-# List available external plugins
+# See all installable plugins from the registry
 forge plugin list
-
-# Install external plugin
-forge plugin install my-plugin
-
-# Update external plugin
-forge plugin update my-plugin
-
-# Update all external plugins
-forge plugin update --all
-
-# Remove external plugin
-forge plugin remove my-plugin
 ```
 
-**Learn more:**
-- [External Plugin Development Guide](docs/EXTERNAL_PLUGIN_GUIDE.md)
-- [Wrapper Templates](docs/WRAPPER_TEMPLATE.md)
-- [Authentication Setup](docs/AUTHENTICATION.md)
+The authoritative list of registered plugins lives in [`plugins-registry.yaml`](plugins-registry.yaml).
+
+### Getting Started with gauge and provenance
+
+```bash
+# Install the container vulnerability scanner
+forge plugin install gauge
+
+# Install the image delivery verification tool
+forge plugin install provenance
+```
+
+Once installed, the tools are available as standard FORGE commands:
+
+```bash
+forge gauge --help
+forge provenance --help
+```
+
+### Managing Plugins
+
+```bash
+# List available and installed plugins
+forge plugin list
+
+# Update a plugin
+forge plugin update gauge
+
+# Update all installed plugins
+forge plugin update --all
+
+# Remove a plugin
+forge plugin remove gauge
+```
+
+### Building Your Own Plugin
+
+Plugins implement the `ToolPlugin` protocol, live in a git repository, and register themselves via Python entry points. Add your plugin to `plugins-registry.yaml` to make it discoverable.
+
+See the [Plugin Development Guide](plans/FORGE_PLUGIN_DEVELOPMENT_GUIDE.md) for full details.
 
 ---
 
@@ -83,9 +73,13 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 cd /path/to/forge
 uv tool install --editable .
 
-# Now use from anywhere
+# Install the tools you need
+forge plugin install gauge
+forge plugin install provenance
+
+# Verify installation
 forge --version
-forge gauge --help
+forge plugin list
 ```
 
 #### Option 2: Development Mode
@@ -101,7 +95,7 @@ uv sync
 
 # Run with uv prefix
 uv run forge
-uv run forge gauge scan --help
+uv run forge plugin list
 ```
 
 ### Prerequisites
@@ -326,12 +320,13 @@ FORGE uses a plugin-based architecture that allows tools to work identically in 
 │                  │  (Entry Points)  │                       │
 │                  └────────┬─────────┘                       │
 │                           │                                │
-│         ┌─────────────────┼─────────────────┐             │
-│         │                 │                 │             │
-│    ┌────▼────┐      ┌────▼────┐      ┌────▼────┐        │
-│    │  gauge  │      │provenance│     │  hello  │        │
-│    │ plugin  │      │  plugin  │     │ plugin  │        │
-│    └─────────┘      └─────────┘      └─────────┘        │
+│         ┌─────────────────┴──────────────────┐             │
+│         │                                    │             │
+│    ┌────▼────┐      ┌─────────────────────▼──┐            │
+│    │  hello  │      │  External Plugins       │            │
+│    │(bundled)│      │  gauge, provenance, ... │            │
+│    └─────────┘      │  (forge plugin install) │            │
+│                     └─────────────────────────┘            │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -342,9 +337,8 @@ FORGE uses a plugin-based architecture that allows tools to work identically in 
 - **forge-cli**: CLI dispatcher with auto-generated argparse and plugin manager
 - **forge-api**: FastAPI service with ARQ workers and Redis
 - **forge-ui**: React SPA with real-time WebSocket updates
-- **forge-gauge**: Container vulnerability scanning plugin (built-in)
-- **forge-provenance**: Image delivery verification plugin (built-in)
-- **External plugins**: Plugins from git repositories (managed via `forge plugin` commands)
+- **forge-hello**: Bundled example plugin (dev/test scaffold)
+- **External plugins**: gauge, provenance, and others — installed via `forge plugin install`
 
 ### Plugin Protocol
 
@@ -369,7 +363,7 @@ This allows:
 - **API**: Auto-generated Pydantic schemas and OpenAPI docs
 - **UI**: Auto-generated forms with real-time progress
 
-See [plans/FORGE_PLUGIN_MIGRATION_GUIDE.md](plans/FORGE_PLUGIN_MIGRATION_GUIDE.md) for plugin development.
+See [plans/FORGE_PLUGIN_DEVELOPMENT_GUIDE.md](plans/FORGE_PLUGIN_DEVELOPMENT_GUIDE.md) for plugin development.
 
 ---
 
@@ -410,18 +404,19 @@ make lint format typecheck test
 forge/
 ├── packages/
 │   ├── forge-core/          # Plugin protocol and shared utilities
-│   ├── forge-cli/           # CLI dispatcher
+│   ├── forge-cli/           # CLI dispatcher + plugin manager
 │   ├── forge-api/           # FastAPI server + ARQ workers
 │   ├── forge-ui/            # React UI
-│   ├── forge-gauge/         # Gauge plugin (vulnerability scanning)
-│   └── forge-provenance/    # Provenance plugin (delivery verification)
+│   └── forge-hello/         # Bundled example plugin (dev scaffold)
+│                            # External plugins (gauge, provenance, ...)
+│                            # are installed via `forge plugin install`
 ├── deploy/
 │   ├── Dockerfile.api       # API server image
 │   ├── Dockerfile.worker    # Worker image
 │   ├── Dockerfile.ui        # UI image
 │   └── helm/forge/          # Kubernetes Helm chart
 ├── tests/                   # Unit and integration tests
-└── plans/                   # Implementation guides
+└── plans/                   # Implementation and development guides
 ```
 
 ---
@@ -549,6 +544,7 @@ FORGE can be used in CI/CD pipelines:
 - name: Scan container images
   run: |
     uv tool install git+https://github.com/chainguard/forge
+    forge plugin install gauge
     forge gauge scan \
       --input production-images.csv \
       --output vuln_summary,cost_analysis \
@@ -616,7 +612,7 @@ forge gauge scan --input nginx:latest -v
 
 ## Contributing
 
-See [plans/FORGE_PLUGIN_MIGRATION_GUIDE.md](plans/FORGE_PLUGIN_MIGRATION_GUIDE.md) for:
+See [plans/FORGE_PLUGIN_DEVELOPMENT_GUIDE.md](plans/FORGE_PLUGIN_DEVELOPMENT_GUIDE.md) for:
 - Plugin development guide
 - Converting existing tools to FORGE plugins
 - Testing and validation
@@ -635,11 +631,18 @@ See [plans/FORGE_PLUGIN_MIGRATION_GUIDE.md](plans/FORGE_PLUGIN_MIGRATION_GUIDE.m
 
 ### Tools
 
+**Bundled**
+
+| Tool | Status | Description |
+|------|--------|-------------|
+| **hello** | ✅ Ready | Example plugin (dev/test scaffold) |
+
+**External Plugins** (install via `forge plugin install <name>`)
+
 | Tool | Status | Description |
 |------|--------|-------------|
 | **gauge** | ✅ Ready | Container vulnerability scanning and image matching |
 | **provenance** | ✅ Ready | Image delivery verification |
-| **hello** | ✅ Test plugin | Example plugin for testing |
 
 ---
 
@@ -652,6 +655,6 @@ Apache 2.0
 ## Resources
 
 - **Deployment Guide**: [DEPLOYMENT.md](DEPLOYMENT.md)
-- **Plugin Migration Guide**: [plans/FORGE_PLUGIN_MIGRATION_GUIDE.md](plans/FORGE_PLUGIN_MIGRATION_GUIDE.md)
+- **Plugin Development Guide**: [plans/FORGE_PLUGIN_DEVELOPMENT_GUIDE.md](plans/FORGE_PLUGIN_DEVELOPMENT_GUIDE.md)
 - **Implementation Plan**: [plans/FORGE_IMPLEMENTATION_PLAN.md](plans/FORGE_IMPLEMENTATION_PLAN.md)
 - **API Documentation**: http://localhost:8080/docs (when running)
