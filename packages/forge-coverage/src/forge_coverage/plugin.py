@@ -187,7 +187,7 @@ class CoveragePlugin:
                     status=ResultStatus.FAILURE,
                     summary="The --force argument can only be used with --refresh",
                 )
-        elif not args.get("requirements-file"):
+        elif not args.get("requirements_file"):
             return ToolResult(
                 status=ResultStatus.FAILURE,
                 summary="At least one requirements-file is required",
@@ -231,8 +231,8 @@ class CoveragePlugin:
         """Convert args dict to argparse.Namespace for check_coverage.py."""
         ns = argparse.Namespace()
 
-        # Convert requirements-file to requirements_file (path list)
-        req_file = args.get("requirements-file")
+        # Convert requirements_file to path list
+        req_file = args.get("requirements_file")
         if req_file:
             # Handle single file as a list
             ns.requirements_file = [Path(req_file)]
@@ -241,17 +241,17 @@ class CoveragePlugin:
 
         # Simple string/int/bool mappings
         ns.mode = args.get("mode", "index")
-        ns.index_url = args.get("index-url", "https://libraries.cgr.dev/python/simple")
+        ns.index_url = args.get("index_url", "https://libraries.cgr.dev/python/simple")
         ns.verbose = args.get("verbose", False)
         ns.workers = args.get("workers", 10)
 
         # Filter arguments
         ns.arch = args.get("arch")
-        ns.python_version = args.get("python-version")
-        ns.manylinux_variant = args.get("manylinux-variant")
+        ns.python_version = args.get("python_version")
+        ns.manylinux_variant = args.get("manylinux_variant")
 
         # Database arguments
-        ns.database_url = args.get("database-url")
+        ns.database_url = args.get("database_url")
         ns.generation = args.get("generation")
 
         csv_path = args.get("csv")
@@ -260,8 +260,8 @@ class CoveragePlugin:
         # API arguments
         ns.issue = args.get("issue")
         ns.token = args.get("token")
-        ns.api_url = args.get("api-url", "https://rebuilder-api-python.prod-eco.dev")
-        ns.organization_id = args.get("organization-id")
+        ns.api_url = args.get("api_url", "https://rebuilder-api-python.prod-eco.dev")
+        ns.organization_id = args.get("organization_id")
         ns.environment = args.get("environment", "prod")
         ns.refresh = args.get("refresh", False)
         ns.force = args.get("force", False)
