@@ -66,12 +66,3 @@ external_plugins:
     plugin_type: "native"
     tags: [security, provenance, verification, authenticity]
     private: true
-
-  coverage:
-    package: "forge-coverage"
-    source: "git+https://github.com/chainguard/forge.git#subdirectory=packages/forge-coverage"
-    ref: "main"
-    description: "Python and JavaScript package coverage checking for Chainguard libraries"
-    plugin_type: "native"
-    tags: [coverage, packages, python, javascript]
-    private: true

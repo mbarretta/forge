@@ -126,7 +126,6 @@ jobs:
           echo "$output"
           echo "$output" | grep -q "gauge" || (echo "ERROR: 'gauge' not found in plugin list" && exit 1)
           echo "$output" | grep -q "provenance" || (echo "ERROR: 'provenance' not found in plugin list" && exit 1)
-          echo "$output" | grep -q "coverage" || (echo "ERROR: 'coverage' not found in plugin list" && exit 1)
         env:
           FORGE_PLUGIN_REGISTRY: ${{ github.workspace }}/plugins-registry.yaml
 
