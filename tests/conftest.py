@@ -24,6 +24,7 @@ def mock_plugin():
         name = "mock"
         description = "Mock plugin for testing"
         version = "0.1.0"
+        requires_auth = False
 
         def get_params(self):
             return [

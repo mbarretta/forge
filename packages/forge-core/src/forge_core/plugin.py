@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from forge_core.context import ExecutionContext
@@ -37,17 +37,19 @@ class ToolResult:
     artifacts: dict[str, str] = field(default_factory=dict)
 
 
+ParamType = Literal["str", "int", "float", "bool", "path"]
+
+
 @dataclass(frozen=True)
 class ToolParam:
     """Declares a parameter that the tool accepts.
 
-    Used by the CLI to build argparse arguments and by the API
-    to build request schemas.
+    Used by the CLI to build argparse arguments.
 
     Attributes:
         name: Parameter name (used as CLI flag --name and JSON key).
         description: Help text.
-        type: Python type name as string: "str", "int", "float", "bool".
+        type: Python type name: "str", "int", "float", "bool", or "path".
         required: Whether the parameter must be provided.
         default: Default value if not required.
         choices: Optional list of allowed values.
@@ -55,7 +57,7 @@ class ToolParam:
 
     name: str
     description: str
-    type: str = "str"
+    type: ParamType = "str"
     required: bool = False
     default: Any = None
     choices: list[str] | None = None
@@ -66,8 +68,8 @@ class ToolPlugin(Protocol):
     """Protocol that every FORGE tool must implement.
 
     A tool plugin provides:
-    - Metadata (name, description, version)
-    - Parameter declarations (so CLI and API can auto-generate interfaces)
+    - Metadata (name, description, version, requires_auth)
+    - Parameter declarations (so the CLI can auto-generate interfaces)
     - A run method that does the actual work
 
     Example implementation:
@@ -76,6 +78,7 @@ class ToolPlugin(Protocol):
             name = "my-tool"
             description = "Does something useful"
             version = "1.0.0"
+            requires_auth = True   # set False if chainctl is not needed
 
             def get_params(self) -> list[ToolParam]:
                 return [
@@ -94,6 +97,7 @@ class ToolPlugin(Protocol):
     name: str
     description: str
     version: str
+    requires_auth: bool
 
     def get_params(self) -> list[ToolParam]:
         """Declare the parameters this tool accepts."""

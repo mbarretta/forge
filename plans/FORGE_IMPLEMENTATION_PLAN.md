@@ -1,5 +1,12 @@
 # FORGE Implementation Plan
 
+> **ARCHIVED** — This document describes the original API + Web UI architecture, which was
+> removed in favour of a CLI-only single-user design. See `README.md` and
+> `plans/FORGE_PLUGIN_DEVELOPMENT_GUIDE.md` for current architecture documentation.
+> The content below is preserved for historical reference only.
+
+---
+
 ## Overview
 
 FORGE is a meta-tool that unifies Chainguard field engineering tools (Gauge, ILS-Fetcher, Verify-Provenance, and future tools) under a single CLI and web application. It uses a plugin architecture so tools can be added without modifying FORGE itself.

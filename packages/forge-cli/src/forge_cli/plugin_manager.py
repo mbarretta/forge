@@ -6,6 +6,8 @@ Uses UV for git-based package installation with support for private GitHub repos
 
 from __future__ import annotations
 
+import importlib.resources
+import json
 import os
 import subprocess
 import sys
@@ -14,7 +16,7 @@ from typing import Any
 
 import yaml
 
-from forge_cli.system_deps import install_system_deps, parse_system_deps
+from forge_cli.system_deps import SystemDepSpec, install_system_deps, parse_system_deps
 
 
 class PluginManager:
@@ -24,53 +26,77 @@ class PluginManager:
         """Initialize plugin manager.
 
         Args:
-            registry_path: Path to plugins-registry.yaml. If None, searches for it
-                          in the FORGE root directory.
+            registry_path: Explicit path to plugins-registry.yaml (for testing/CI).
+                          If None, uses the standard resolution order:
+                          FORGE_PLUGIN_REGISTRY env var → user config → bundled default.
         """
-        if registry_path is None:
-            if env_path := os.environ.get("FORGE_PLUGIN_REGISTRY"):
-                registry_path = Path(env_path)
-            else:
-                # Walk up from this file to find the FORGE root containing the registry.
-                # Expected layout: packages/forge-cli/src/forge_cli/plugin_manager.py
-                registry_path = Path(__file__).parents[4] / "plugins-registry.yaml"
-
-        self.registry_path = registry_path
+        self._explicit_registry_path = registry_path
         self._registry: dict[str, dict[str, Any]] | None = None
 
+    def _get_registry_content(self) -> str:
+        """Read registry YAML content using the resolution order."""
+        # 1. Explicit path (testing / constructor override)
+        if self._explicit_registry_path is not None:
+            if not self._explicit_registry_path.exists():
+                print(
+                    f"Warning: Registry not found at {self._explicit_registry_path}",
+                    file=sys.stderr,
+                )
+                return ""
+            return self._explicit_registry_path.read_text()
+
+        # 2. FORGE_PLUGIN_REGISTRY env var (CI / custom overrides)
+        if env_path := os.environ.get("FORGE_PLUGIN_REGISTRY"):
+            path = Path(env_path)
+            if not path.exists():
+                print(
+                    f"Warning: FORGE_PLUGIN_REGISTRY path not found: {path}",
+                    file=sys.stderr,
+                )
+                return ""
+            return path.read_text()
+
+        # 3. User-local additions and overrides
+        user_path = Path.home() / ".config" / "forge" / "plugins-registry.yaml"
+        if user_path.exists():
+            return user_path.read_text()
+
+        # 4. Bundled default (works after `uv tool install`, no env var needed)
+        return (
+            importlib.resources.files("forge_cli")
+            .joinpath("data/plugins-registry.yaml")
+            .read_text(encoding="utf-8")
+        )
+
     def _load_registry(self) -> dict[str, dict[str, Any]]:
-        """Load plugin registry from YAML file (result is cached)."""
+        """Load plugin registry from YAML (result is cached)."""
         if self._registry is not None:
             return self._registry
 
-        if not self.registry_path.exists():
-            print(f"Warning: Plugin registry not found at {self.registry_path}", file=sys.stderr)
-            self._registry = {}
-            return self._registry
-
         try:
-            with open(self.registry_path) as f:
-                data = yaml.safe_load(f)
-                self._registry = data.get("external_plugins", {}) if data else {}
+            content = self._get_registry_content()
+            if not content:
+                self._registry = {}
                 return self._registry
+            data = yaml.safe_load(content)
+            self._registry = data.get("external_plugins", {}) if data else {}
         except Exception as e:
             print(f"Error loading plugin registry: {e}", file=sys.stderr)
             self._registry = {}
-            return self._registry
+
+        return self._registry
 
     def _resolve_plugin(self, name: str) -> dict[str, Any] | None:
-        """Look up a plugin by name, printing an error if not found.
-
-        Returns:
-            Plugin info dict, or None if the plugin is not in the registry.
-        """
+        """Look up a plugin by name, printing an error if not found."""
         registry = self._load_registry()
         if name in registry:
             return registry[name]
 
         print(f"Error: Plugin '{name}' not found in registry", file=sys.stderr)
         if registry:
-            print(f"\nAvailable plugins: {', '.join(sorted(registry))}", file=sys.stderr)
+            print(
+                f"\nAvailable plugins: {', '.join(sorted(registry))}", file=sys.stderr
+            )
         return None
 
     @staticmethod
@@ -87,15 +113,34 @@ class PluginManager:
             )
             return None
 
-    def list_available(self, tag_filter: str | None = None) -> dict[str, dict[str, Any]]:
-        """List available external plugins from registry.
+    @staticmethod
+    def _running_as_uv_tool() -> bool:
+        """Return True when forge is installed as a uv tool (isolated venv)."""
+        tools_path = Path.home() / ".local" / "share" / "uv" / "tools"
+        return tools_path in Path(sys.executable).parents
 
-        Args:
-            tag_filter: Optional tag to filter plugins by.
+    def _install_package(self, package_url: str) -> int | None:
+        """Install a Python package into the correct environment."""
+        if self._running_as_uv_tool():
+            # Target forge's isolated tool venv directly via its Python executable.
+            # This works regardless of uv version (no 'uv tool inject' needed).
+            return self._run_uv(
+                ["pip", "install", "--python", sys.executable, package_url]
+            )
+        return self._run_uv(["pip", "install", package_url])
 
-        Returns:
-            Dict mapping plugin name to plugin info.
-        """
+    def _uninstall_package(self, package_name: str) -> int | None:
+        """Uninstall a Python package from the correct environment."""
+        if self._running_as_uv_tool():
+            return self._run_uv(
+                ["pip", "uninstall", "--python", sys.executable, "-y", package_name]
+            )
+        return self._run_uv(["pip", "uninstall", "-y", package_name])
+
+    def list_available(
+        self, tag_filter: str | None = None
+    ) -> dict[str, dict[str, Any]]:
+        """List available external plugins from registry."""
         registry = self._load_registry()
 
         if tag_filter:
@@ -122,13 +167,28 @@ class PluginManager:
         if plugin_info is None:
             return 1
 
+        plugin_type = plugin_info.get("plugin_type", "native")
+
+        if plugin_type == "binary":
+            return self._install_binary_plugin(name, plugin_info)
+
+        return self._install_python_plugin(name, plugin_info, ref, strict)
+
+    def _install_python_plugin(
+        self, name: str, plugin_info: dict[str, Any], ref: str | None, strict: bool
+    ) -> int:
+        """Install a native/wrapper Python plugin."""
         git_url = plugin_info["source"]
         is_private = plugin_info.get("private", False)
 
-        # Use provided ref, or fall back to registry default
         ref_to_use = ref or plugin_info.get("ref")
         if ref_to_use:
-            git_url = f"{git_url}@{ref_to_use}"
+            # @ref must come before any # fragment (e.g. #subdirectory=...)
+            if "#" in git_url:
+                base, fragment = git_url.split("#", 1)
+                git_url = f"{base}@{ref_to_use}#{fragment}"
+            else:
+                git_url = f"{git_url}@{ref_to_use}"
 
         print(f"Installing plugin '{name}' from {git_url}...")
 
@@ -149,35 +209,46 @@ class PluginManager:
                     print(f"  {r.spec.binary}: installed via {r.spec.manager}")
                 else:
                     system_dep_failures.append(r)
-                    print(f"  Warning: {r.spec.binary}: {r.error_message}", file=sys.stderr)
+                    print(
+                        f"  Warning: {r.spec.binary}: {r.error_message}",
+                        file=sys.stderr,
+                    )
 
-        rc = self._run_uv(["pip", "install", git_url])
+        rc = self._install_package(git_url)
         if rc is None:
             return 1
 
         if rc != 0:
             print(f"\nError: Failed to install plugin '{name}'", file=sys.stderr)
             if is_private:
-                print(
-                    "\nAuthentication help:\n"
-                    "  - For SSH: Ensure your SSH key is added to GitHub (https://github.com/settings/keys)\n"
-                    "  - For HTTPS: Configure git credentials (git config --global credential.helper store)\n"
-                    "  - Test access: gh repo view <org>/<repo>",
-                    file=sys.stderr,
-                )
+                source = plugin_info.get("source", "")
+                if "git+ssh://" in source:
+                    print(
+                        "  Hint: ensure your SSH key is added — see docs/AUTHENTICATION.md",
+                        file=sys.stderr,
+                    )
+                elif "git+https://" in source:
+                    print(
+                        "  Hint: run `gh auth login` to configure git credentials — see docs/AUTHENTICATION.md",
+                        file=sys.stderr,
+                    )
             return rc
 
         print(f"\n✓ Plugin '{name}' installed successfully")
         print(f"\nUsage: forge {plugin_info['package']} --help")
 
         if system_dep_failures:
-            print(f"\nWarning: '{name}' installed but these system deps need manual setup:")
+            print(
+                f"\nWarning: '{name}' installed but these system deps need manual setup:"
+            )
             for r in system_dep_failures:
                 print(f"  {r.spec.binary} ({r.spec.manager}): {r.spec.package}")
                 if r.error_message:
                     for line in r.error_message.splitlines():
                         print(f"    {line}")
-            print("\nThe plugin is installed but may not function until the above are resolved.")
+            print(
+                "\nThe plugin is installed but may not function until the above are resolved."
+            )
             if strict:
                 print(
                     "\nError: system dependency installation failed (--strict mode)",
@@ -185,6 +256,106 @@ class PluginManager:
                 )
                 return 1
 
+        return 0
+
+    def _introspect_and_cache(self, name: str, binary_path: Path) -> dict | None:
+        """Run ``--forge-introspect`` on a binary, cache the result, and return it.
+
+        Returns the introspection dict on success, or None on any failure.
+        """
+        try:
+            proc = subprocess.run(
+                [str(binary_path), "--forge-introspect"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except subprocess.TimeoutExpired:
+            print(
+                f"Error: '{binary_path.name} --forge-introspect' timed out",
+                file=sys.stderr,
+            )
+            return None
+        except FileNotFoundError:
+            print(
+                f"Error: Binary not found at {binary_path}. Is {binary_path.parent} in PATH?",
+                file=sys.stderr,
+            )
+            return None
+
+        if proc.returncode != 0:
+            print(
+                f"Warning: '{binary_path.name} --forge-introspect' exited {proc.returncode}. "
+                "Plugin may not work correctly.",
+                file=sys.stderr,
+            )
+            return None
+
+        try:
+            introspect_data = json.loads(proc.stdout)
+        except json.JSONDecodeError as e:
+            print(
+                f"Error: '{binary_path.name} --forge-introspect' returned invalid JSON: {e}",
+                file=sys.stderr,
+            )
+            return None
+
+        cache_path = Path.home() / ".config" / "forge" / "binary-plugins.json"
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
+        except Exception:
+            cache = {}
+        cache[name] = {
+            "binary_path": str(binary_path),
+            "introspect_data": introspect_data,
+        }
+        cache_path.write_text(json.dumps(cache, indent=2))
+        return introspect_data
+
+    def _install_binary_plugin(self, name: str, plugin_info: dict[str, Any]) -> int:
+        """Install a binary-protocol plugin: download binary, introspect, cache."""
+        binary_source = plugin_info.get("binary_source", {})
+        if not binary_source:
+            print(
+                f"Error: Binary plugin '{name}' has no 'binary_source' config",
+                file=sys.stderr,
+            )
+            return 1
+
+        binary = binary_source.get("binary", name)
+        install_dir = binary_source.get("install_dir", "~/.local/bin")
+        binary_path = Path(install_dir).expanduser() / binary
+
+        spec = SystemDepSpec(
+            manager=binary_source.get("manager", "github_release"),
+            package=f"{binary_source.get('repo', '')}@{binary_source.get('tag', '')}",
+            binary=binary,
+            repo=binary_source.get("repo"),
+            tag=binary_source.get("tag"),
+            asset=binary_source.get("asset"),
+            install_dir=install_dir,
+        )
+
+        print(f"Installing binary plugin '{name}'...")
+        result = install_system_deps([spec])[0]
+
+        if result.already_installed:
+            print(f"  {binary}: already installed, skipping download")
+        elif result.success:
+            print(f"  {binary}: installed to {binary_path.parent}")
+        else:
+            print(
+                f"  Error: Failed to install {binary}: {result.error_message}",
+                file=sys.stderr,
+            )
+            return 1
+
+        if self._introspect_and_cache(name, binary_path) is None:
+            return 1
+
+        print(f"\n✓ Binary plugin '{name}' installed successfully")
+        print(f"\nUsage: forge {name} --help")
         return 0
 
     def update(self, name: str, ref: str | None = None, strict: bool = False) -> int:
@@ -202,22 +373,23 @@ class PluginManager:
         if plugin_info is None:
             return 1
 
-        package_name = plugin_info["package"]
+        plugin_type = plugin_info.get("plugin_type", "native")
 
-        # First uninstall the current version
+        if plugin_type == "binary":
+            # Remove and reinstall binary plugin
+            self._remove_binary_plugin(name, plugin_info)
+            return self._install_binary_plugin(name, plugin_info)
+
+        package_name = plugin_info["package"]
         print(f"Removing current version of '{name}'...")
-        rc = self._run_uv(["pip", "uninstall", "-y", package_name])
+        rc = self._uninstall_package(package_name)
         if rc is None:
             return 1
 
-        # Then install the updated version
         return self.install(name, ref, strict=strict)
 
     def update_all(self, strict: bool = False) -> int:
         """Update all installed external plugins.
-
-        Args:
-            strict: If True, return non-zero when any system dependency fails to install.
 
         Returns:
             Exit code: 0 if all succeeded, non-zero if any failed.
@@ -235,7 +407,7 @@ class PluginManager:
             result = self.update(name, strict=strict)
             if result != 0:
                 failed.append(name)
-            print()  # Blank line between updates
+            print()
 
         if failed:
             print(f"\n✗ Failed to update: {', '.join(failed)}", file=sys.stderr)
@@ -257,11 +429,15 @@ class PluginManager:
         if plugin_info is None:
             return 1
 
-        package_name = plugin_info["package"]
+        plugin_type = plugin_info.get("plugin_type", "native")
 
+        if plugin_type == "binary":
+            return self._remove_binary_plugin(name, plugin_info)
+
+        package_name = plugin_info["package"]
         print(f"Removing plugin '{name}'...")
 
-        rc = self._run_uv(["pip", "uninstall", "-y", package_name])
+        rc = self._uninstall_package(package_name)
         if rc is None:
             return 1
 
@@ -274,22 +450,45 @@ class PluginManager:
         specs = parse_system_deps(plugin_info)
         if specs:
             binaries = ", ".join(s.binary for s in specs)
-            print(f"\nNote: System dependencies were not removed (they may be shared): {binaries}")
+            print(
+                f"\nNote: System dependencies were not removed (they may be shared): {binaries}"
+            )
             print("Remove them manually if no longer needed.")
 
         return 0
 
+    def _remove_binary_plugin(self, name: str, plugin_info: dict[str, Any]) -> int:
+        """Remove a binary-protocol plugin."""
+        binary_source = plugin_info.get("binary_source", {})
+        binary = binary_source.get("binary", name)
+        install_dir = binary_source.get("install_dir", "~/.local/bin")
+        binary_path = Path(install_dir).expanduser() / binary
 
-def format_plugin_list(plugins: dict[str, dict[str, Any]], verbose: bool = False) -> str:
-    """Format plugin list for display.
+        print(f"Removing binary plugin '{name}'...")
 
-    Args:
-        plugins: Dict of plugin name to info.
-        verbose: Show detailed information.
+        if binary_path.exists():
+            binary_path.unlink()
+            print(f"  Removed {binary_path}")
+        else:
+            print(f"  Warning: Binary not found at {binary_path}", file=sys.stderr)
 
-    Returns:
-        Formatted string for display.
-    """
+        cache_path = Path.home() / ".config" / "forge" / "binary-plugins.json"
+        if cache_path.exists():
+            try:
+                cache = json.loads(cache_path.read_text())
+                cache.pop(name, None)
+                cache_path.write_text(json.dumps(cache, indent=2))
+            except Exception:
+                pass
+
+        print(f"\n✓ Binary plugin '{name}' removed")
+        return 0
+
+
+def format_plugin_list(
+    plugins: dict[str, dict[str, Any]], verbose: bool = False
+) -> str:
+    """Format plugin list for display."""
     if not plugins:
         return "No external plugins available in registry"
 
@@ -307,10 +506,16 @@ def format_plugin_list(plugins: dict[str, dict[str, Any]], verbose: bool = False
         lines.append(f"  {name:<20} {desc}{type_marker}{privacy_marker}")
 
         if verbose:
-            lines.append(f"    Package: {info['package']}")
-            lines.append(f"    Source:  {info['source']}")
-            if info.get("ref"):
-                lines.append(f"    Ref:     {info['ref']}")
+            if plugin_type == "binary":
+                bs = info.get("binary_source", {})
+                lines.append(f"    Binary:  {bs.get('binary', name)}")
+                lines.append(f"    Repo:    {bs.get('repo', '')}")
+                lines.append(f"    Tag:     {bs.get('tag', '')}")
+            else:
+                lines.append(f"    Package: {info.get('package', '')}")
+                lines.append(f"    Source:  {info.get('source', '')}")
+                if info.get("ref"):
+                    lines.append(f"    Ref:     {info['ref']}")
             if info.get("tags"):
                 lines.append(f"    Tags:    {', '.join(info['tags'])}")
             specs = parse_system_deps(info)

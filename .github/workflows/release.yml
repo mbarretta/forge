@@ -5,79 +5,27 @@ on:
     tags:
       - 'v*.*.*'
 
-env:
-  REGISTRY: cgr.dev/chainguard-private
-
 jobs:
-  build-and-push:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    strategy:
-      matrix:
-        include:
-          - dockerfile: deploy/Dockerfile.api
-            image: forge-api
-            context: .
-          - dockerfile: deploy/Dockerfile.worker
-            image: forge-worker
-            context: .
-          - dockerfile: deploy/Dockerfile.ui
-            image: forge-ui
-            context: .
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Chainguard Registry
-        uses: docker/login-action@v3
+      - uses: astral-sh/setup-uv@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.CHAINGUARD_REGISTRY_USERNAME }}
-          password: ${{ secrets.CHAINGUARD_REGISTRY_TOKEN }}
+          version: "latest"
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ matrix.image }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Set up Python
+        run: uv python install 3.12
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-          provenance: true
-          sbom: true
+      - name: Install dependencies
+        run: uv sync --frozen
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-
-      - name: Sign images with Cosign
-        env:
-          COSIGN_EXPERIMENTAL: "true"
-        run: |
-          cosign sign --yes ${{ env.REGISTRY }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
+      - name: Run tests
+        run: uv run pytest tests/ -v
 
   create-release:
-    needs: build-and-push
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -96,15 +44,15 @@ jobs:
               "template": "#{{CHANGELOG}}\n\n**Full Changelog**: #{{RELEASE_DIFF}}",
               "categories": [
                 {
-                  "title": "## 🚀 Features",
+                  "title": "## Features",
                   "labels": ["feature", "enhancement"]
                 },
                 {
-                  "title": "## 🐛 Bug Fixes",
+                  "title": "## Bug Fixes",
                   "labels": ["bug", "fix"]
                 },
                 {
-                  "title": "## 📝 Documentation",
+                  "title": "## Documentation",
                   "labels": ["documentation"]
                 }
               ]
@@ -116,21 +64,23 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body: |
-            ## Container Images
+            ## Installation
 
             ```bash
-            docker pull ${{ env.REGISTRY }}/forge-api:${{ github.ref_name }}
-            docker pull ${{ env.REGISTRY }}/forge-worker:${{ github.ref_name }}
-            docker pull ${{ env.REGISTRY }}/forge-ui:${{ github.ref_name }}
+            uv tool install forge --from git+https://github.com/chainguard/forge@${{ github.ref_name }}
             ```
 
-            ## Helm Chart
+            Update an existing install:
 
             ```bash
-            helm install forge ./deploy/helm/forge \
-              --set api.image.tag=${{ github.ref_name }} \
-              --set worker.image.tag=${{ github.ref_name }} \
-              --set ui.image.tag=${{ github.ref_name }}
+            uv tool upgrade forge
+            ```
+
+            Then install the plugins you need:
+
+            ```bash
+            forge plugin install gauge
+            forge plugin install provenance
             ```
 
             ${{ steps.changelog.outputs.changelog }}
@@ -138,41 +88,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy-staging:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    environment:
-      name: staging
-      url: https://forge-staging.internal.chainguard.dev
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Setup Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: 'latest'
-
-      - name: Configure kubectl
-        run: |
-          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > kubeconfig
-          export KUBECONFIG=./kubeconfig
-
-      - name: Deploy to staging
-        run: |
-          helm upgrade --install forge ./deploy/helm/forge \
-            --namespace forge-staging \
-            --create-namespace \
-            --set api.image.tag=${{ github.ref_name }} \
-            --set worker.image.tag=${{ github.ref_name }} \
-            --set ui.image.tag=${{ github.ref_name }} \
-            --set ingress.hosts[0].host=forge-staging.internal.chainguard.dev \
-            --wait \
-            --timeout 5m
-        env:
-          KUBECONFIG: ./kubeconfig

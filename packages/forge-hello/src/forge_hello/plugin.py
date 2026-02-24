@@ -15,6 +15,7 @@ class HelloPlugin:
     name = "hello"
     description = "Hello world test plugin"
     version = "0.1.0"
+    requires_auth = False  # runs without chainctl installed
 
     def get_params(self) -> list[ToolParam]:
         return [
