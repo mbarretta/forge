@@ -19,9 +19,11 @@ from typing import Any, Callable
 class SystemDepSpec:
     """A single non-Python binary dependency for a plugin."""
 
-    manager: str   # "go" | "npm" | "github_release"
-    package: str   # for go/npm: verbatim install argument; for github_release: "repo@tag"
-    binary: str    # binary name checked via shutil.which
+    manager: str  # "go" | "npm" | "github_release"
+    package: (
+        str  # for go/npm: verbatim install argument; for github_release: "repo@tag"
+    )
+    binary: str  # binary name checked via shutil.which
     # github_release-specific (optional for go/npm)
     repo: str | None = None
     tag: str | None = None
@@ -131,16 +133,22 @@ def _install_via_cli(
     """Run a CLI install command and return a SystemDepResult."""
     if not shutil.which(cli_tool):
         return SystemDepResult(
-            spec=spec, already_installed=False, success=False, error_message=not_found_msg
+            spec=spec,
+            already_installed=False,
+            success=False,
+            error_message=not_found_msg,
         )
     result = subprocess.run(install_cmd, capture_output=True, text=True)
     if result.returncode == 0:
-        return SystemDepResult(spec=spec, already_installed=False, success=True, error_message=None)
+        return SystemDepResult(
+            spec=spec, already_installed=False, success=True, error_message=None
+        )
     return SystemDepResult(
         spec=spec,
         already_installed=False,
         success=False,
-        error_message=result.stderr.strip() or f"{cli_tool} exited with code {result.returncode}",
+        error_message=result.stderr.strip()
+        or f"{cli_tool} exited with code {result.returncode}",
     )
 
 
@@ -203,10 +211,16 @@ def _try_gh_download(
         return None
     result = subprocess.run(
         [
-            "gh", "release", "download", spec.tag,
-            "--repo", spec.repo,
-            "--pattern", asset_name,
-            "--dir", str(install_dir),
+            "gh",
+            "release",
+            "download",
+            spec.tag,
+            "--repo",
+            spec.repo,
+            "--pattern",
+            asset_name,
+            "--dir",
+            str(install_dir),
         ],
         capture_output=True,
         text=True,
@@ -218,7 +232,9 @@ def _try_gh_download(
         downloaded.rename(binary_path)
     if binary_path.exists():
         _chmod_x(binary_path)
-        return SystemDepResult(spec=spec, already_installed=False, success=True, error_message=None)
+        return SystemDepResult(
+            spec=spec, already_installed=False, success=True, error_message=None
+        )
     return None
 
 
@@ -229,7 +245,10 @@ def _try_api_download(
 ) -> SystemDepResult:
     """Download via GitHub REST API, using GITHUB_TOKEN if set."""
     token = os.environ.get("GITHUB_TOKEN", "")
-    headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
@@ -244,7 +263,9 @@ def _try_api_download(
             msg += " — set GITHUB_TOKEN or run `gh auth login`"
         elif e.code == 404:
             msg += " — release not found (check repo/tag and access)"
-        return SystemDepResult(spec=spec, already_installed=False, success=False, error_message=msg)
+        return SystemDepResult(
+            spec=spec, already_installed=False, success=False, error_message=msg
+        )
     except Exception as e:
         return SystemDepResult(
             spec=spec, already_installed=False, success=False, error_message=str(e)
@@ -253,7 +274,9 @@ def _try_api_download(
     for asset in release.get("assets", []):
         if asset["name"] == asset_name:
             try:
-                dl_req = urllib.request.Request(asset["browser_download_url"], headers=headers)
+                dl_req = urllib.request.Request(
+                    asset["browser_download_url"], headers=headers
+                )
                 with urllib.request.urlopen(dl_req) as resp:
                     binary_path.write_bytes(resp.read())
                 _chmod_x(binary_path)
@@ -262,7 +285,10 @@ def _try_api_download(
                 )
             except Exception as e:
                 return SystemDepResult(
-                    spec=spec, already_installed=False, success=False, error_message=str(e)
+                    spec=spec,
+                    already_installed=False,
+                    success=False,
+                    error_message=str(e),
                 )
 
     return SystemDepResult(
@@ -295,10 +321,9 @@ def _install_github_release(spec: SystemDepSpec) -> SystemDepResult:
     asset_name = _resolve_asset_name(spec.asset)
     binary_path = install_dir / spec.binary
 
-    return (
-        _try_gh_download(spec, asset_name, install_dir, binary_path)
-        or _try_api_download(spec, asset_name, binary_path)
-    )
+    return _try_gh_download(
+        spec, asset_name, install_dir, binary_path
+    ) or _try_api_download(spec, asset_name, binary_path)
 
 
 INSTALLERS: dict[str, Callable[[SystemDepSpec], SystemDepResult]] = {

@@ -96,7 +96,9 @@ def _manage_plugins(argv: list[str]) -> int:
         prog="forge plugin",
         description="Manage external FORGE plugins from git repositories",
     )
-    subparsers = parser.add_subparsers(dest="subcommand", help="Plugin management commands")
+    subparsers = parser.add_subparsers(
+        dest="subcommand", help="Plugin management commands"
+    )
 
     # list command
     list_parser = subparsers.add_parser("list", help="List available external plugins")
@@ -113,7 +115,8 @@ def _manage_plugins(argv: list[str]) -> int:
     )
     install_parser.add_argument("name", help="Plugin name from registry")
     install_parser.add_argument(
-        "--ref", help="Git ref (tag/branch/commit) to install (overrides registry default)"
+        "--ref",
+        help="Git ref (tag/branch/commit) to install (overrides registry default)",
     )
     install_parser.add_argument(
         "--strict",
@@ -123,7 +126,9 @@ def _manage_plugins(argv: list[str]) -> int:
 
     # update command
     update_parser = subparsers.add_parser("update", help="Update an external plugin")
-    update_parser.add_argument("name", nargs="?", help="Plugin name (omit to update all)")
+    update_parser.add_argument(
+        "name", nargs="?", help="Plugin name (omit to update all)"
+    )
     update_parser.add_argument(
         "--all", action="store_true", help="Update all external plugins"
     )

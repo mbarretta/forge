@@ -94,7 +94,9 @@ class PluginManager:
 
         print(f"Error: Plugin '{name}' not found in registry", file=sys.stderr)
         if registry:
-            print(f"\nAvailable plugins: {', '.join(sorted(registry))}", file=sys.stderr)
+            print(
+                f"\nAvailable plugins: {', '.join(sorted(registry))}", file=sys.stderr
+            )
         return None
 
     @staticmethod
@@ -122,16 +124,22 @@ class PluginManager:
         if self._running_as_uv_tool():
             # Target forge's isolated tool venv directly via its Python executable.
             # This works regardless of uv version (no 'uv tool inject' needed).
-            return self._run_uv(["pip", "install", "--python", sys.executable, package_url])
+            return self._run_uv(
+                ["pip", "install", "--python", sys.executable, package_url]
+            )
         return self._run_uv(["pip", "install", package_url])
 
     def _uninstall_package(self, package_name: str) -> int | None:
         """Uninstall a Python package from the correct environment."""
         if self._running_as_uv_tool():
-            return self._run_uv(["pip", "uninstall", "--python", sys.executable, "-y", package_name])
+            return self._run_uv(
+                ["pip", "uninstall", "--python", sys.executable, "-y", package_name]
+            )
         return self._run_uv(["pip", "uninstall", "-y", package_name])
 
-    def list_available(self, tag_filter: str | None = None) -> dict[str, dict[str, Any]]:
+    def list_available(
+        self, tag_filter: str | None = None
+    ) -> dict[str, dict[str, Any]]:
         """List available external plugins from registry."""
         registry = self._load_registry()
 
@@ -175,7 +183,12 @@ class PluginManager:
 
         ref_to_use = ref or plugin_info.get("ref")
         if ref_to_use:
-            git_url = f"{git_url}@{ref_to_use}"
+            # @ref must come before any # fragment (e.g. #subdirectory=...)
+            if "#" in git_url:
+                base, fragment = git_url.split("#", 1)
+                git_url = f"{base}@{ref_to_use}#{fragment}"
+            else:
+                git_url = f"{git_url}@{ref_to_use}"
 
         print(f"Installing plugin '{name}' from {git_url}...")
 
@@ -196,7 +209,10 @@ class PluginManager:
                     print(f"  {r.spec.binary}: installed via {r.spec.manager}")
                 else:
                     system_dep_failures.append(r)
-                    print(f"  Warning: {r.spec.binary}: {r.error_message}", file=sys.stderr)
+                    print(
+                        f"  Warning: {r.spec.binary}: {r.error_message}",
+                        file=sys.stderr,
+                    )
 
         rc = self._install_package(git_url)
         if rc is None:
@@ -222,13 +238,17 @@ class PluginManager:
         print(f"\nUsage: forge {plugin_info['package']} --help")
 
         if system_dep_failures:
-            print(f"\nWarning: '{name}' installed but these system deps need manual setup:")
+            print(
+                f"\nWarning: '{name}' installed but these system deps need manual setup:"
+            )
             for r in system_dep_failures:
                 print(f"  {r.spec.binary} ({r.spec.manager}): {r.spec.package}")
                 if r.error_message:
                     for line in r.error_message.splitlines():
                         print(f"    {line}")
-            print("\nThe plugin is installed but may not function until the above are resolved.")
+            print(
+                "\nThe plugin is installed but may not function until the above are resolved."
+            )
             if strict:
                 print(
                     "\nError: system dependency installation failed (--strict mode)",
@@ -251,7 +271,10 @@ class PluginManager:
                 timeout=10,
             )
         except subprocess.TimeoutExpired:
-            print(f"Error: '{binary_path.name} --forge-introspect' timed out", file=sys.stderr)
+            print(
+                f"Error: '{binary_path.name} --forge-introspect' timed out",
+                file=sys.stderr,
+            )
             return None
         except FileNotFoundError:
             print(
@@ -283,7 +306,10 @@ class PluginManager:
             cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
         except Exception:
             cache = {}
-        cache[name] = {"binary_path": str(binary_path), "introspect_data": introspect_data}
+        cache[name] = {
+            "binary_path": str(binary_path),
+            "introspect_data": introspect_data,
+        }
         cache_path.write_text(json.dumps(cache, indent=2))
         return introspect_data
 
@@ -424,7 +450,9 @@ class PluginManager:
         specs = parse_system_deps(plugin_info)
         if specs:
             binaries = ", ".join(s.binary for s in specs)
-            print(f"\nNote: System dependencies were not removed (they may be shared): {binaries}")
+            print(
+                f"\nNote: System dependencies were not removed (they may be shared): {binaries}"
+            )
             print("Remove them manually if no longer needed.")
 
         return 0
@@ -457,7 +485,9 @@ class PluginManager:
         return 0
 
 
-def format_plugin_list(plugins: dict[str, dict[str, Any]], verbose: bool = False) -> str:
+def format_plugin_list(
+    plugins: dict[str, dict[str, Any]], verbose: bool = False
+) -> str:
     """Format plugin list for display."""
     if not plugins:
         return "No external plugins available in registry"

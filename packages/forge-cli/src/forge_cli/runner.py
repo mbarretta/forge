@@ -43,7 +43,9 @@ def detect_subcommand(params: list[ToolParam]) -> ToolParam | None:
     return None
 
 
-def add_params_to_parser(parser: argparse.ArgumentParser, params: list[ToolParam]) -> None:
+def add_params_to_parser(
+    parser: argparse.ArgumentParser, params: list[ToolParam]
+) -> None:
     """Add ToolParam declarations to an argparse.ArgumentParser.
 
     Args:
