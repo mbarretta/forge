@@ -79,6 +79,7 @@ class MyGoToolPlugin:
     name = "my-go-tool"
     description = "Wraps the my-go-tool Go binary"
     version = "1.0.0"
+    requires_auth = False  # Set True if your wrapper needs a chainctl token
 
     def get_params(self) -> list[ToolParam]:
         return [
@@ -299,21 +300,28 @@ install will re-run (and will be skipped if the binary is now in PATH).
 
 ```yaml
 system_deps:
-  - manager: "go"          # Required. "go" | "npm"
-    package: "<arg>"       # Required. Verbatim install argument passed to the manager
+  - manager: "go"          # Required. "go" | "npm" | "github_release"
+    package: "<arg>"       # Required. Verbatim install argument (go/npm) or unused for github_release
     binary: "<name>"       # Required. Binary name checked via shutil.which
+
+    # github_release-only fields:
+    repo: "org/repo"             # GitHub repo (e.g. "chainguard-dev/mytool")
+    tag: "v1.2.3"                # Release tag to download
+    asset: "mytool_{os}_{arch}"  # Asset name template; {os} → darwin/linux/windows, {arch} → amd64/arm64
+    install_dir: "~/.local/bin"  # Install directory (default: ~/.local/bin)
 ```
 
 ### Supported managers
 
-| `manager` | Install command | Runtime check |
+| `manager` | Install command | Auth |
 |---|---|---|
-| `go` | `go install <package>` | `shutil.which("go")` |
-| `npm` | `npm install -g <package>` | `shutil.which("npm")` |
+| `go` | `go install <package>` | Go toolchain / `GOPRIVATE` |
+| `npm` | `npm install -g <package>` | npm credentials |
+| `github_release` | `gh release download` → GitHub API fallback | `gh auth login` or `GITHUB_TOKEN` |
 
 Adding future managers (e.g. `cargo`, `brew`, `pipx`) requires adding one function and one
 dict entry in `packages/forge-cli/src/forge_cli/system_deps.py` — no other changes needed.
 
 ### Registry file
 
-[`plugins-registry.yaml`](../plugins-registry.yaml) — the authoritative list of external plugins.
+[`plugins-registry.yaml`](../packages/forge-cli/src/forge_cli/data/plugins-registry.yaml) — the authoritative list of external plugins.

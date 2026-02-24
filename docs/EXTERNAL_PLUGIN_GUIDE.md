@@ -68,8 +68,10 @@ dependencies = [
 ]
 
 # CRITICAL: Register your plugin entry point
+# IMPORTANT: use the full dotted module path — never use a bare "forge_plugin" top-level
+# module name, as it will collide with other plugins that do the same.
 [project.entry-points."forge.plugins"]
-my-scanner = "my_security_scanner:create_plugin"
+my-scanner = "my_security_scanner.plugin:create_plugin"
 
 [build-system]
 requires = ["hatchling"]
@@ -78,6 +80,7 @@ build-backend = "hatchling.build"
 
 **Key points:**
 - Entry point group must be `"forge.plugins"`
+- Entry point value must use a **namespaced module path** (e.g. `my_security_scanner.plugin:create_plugin`). Never use the bare name `forge_plugin` — it is reserved and will collide with any other plugin that does the same.
 - Entry point value points to a `create_plugin()` factory function
 - Entry point name becomes the CLI command: `forge my-scanner`
 
@@ -100,6 +103,7 @@ class MyScannerPlugin:
     name = "my-scanner"
     description = "Scan container images for security issues"
     version = "1.0.0"
+    requires_auth = True  # True = runner fetches a chainctl token before calling run()
 
     def get_params(self) -> list[ToolParam]:
         """Declare CLI parameters."""
@@ -397,6 +401,7 @@ class LegacyToolWrapper:
     name = "legacy-tool"
     description = "Legacy internal tool (wrapped for FORGE)"
     version = "1.0.0"
+    requires_auth = False  # Set True if your wrapper needs a chainctl token
 
     def get_params(self) -> list[ToolParam]:
         # Map external tool's interface to FORGE params
@@ -455,6 +460,7 @@ class CLIToolWrapper:
     name = "cli-tool"
     description = "External CLI tool (wrapped)"
     version = "1.0.0"
+    requires_auth = False
 
     def get_params(self) -> list[ToolParam]:
         return [
@@ -519,6 +525,51 @@ See [NON_PYTHON_WRAPPER_GUIDE.md](./NON_PYTHON_WRAPPER_GUIDE.md) for a full walk
 - **Update wrapper version** when you change the FORGE integration
 - **Update external tool dependency** when the tool's API changes
 - **Test compatibility** between wrapper and external tool versions
+
+---
+
+## Binary Protocol Plugins (No Python Wrapper Needed)
+
+If you don't want to maintain a Python wrapper repo at all, any binary that speaks a simple
+JSON stdio protocol can be registered directly as a FORGE plugin.
+
+### How it works
+
+```
+# Introspection (called once on install):
+binary --forge-introspect
+stdout → {"name":"...", "description":"...", "version":"...", "requires_auth":false, "params":[...]}
+
+# Execution (called on each `forge <name>` invocation):
+binary --forge-run '{"param1":"val"}'
+stderr → newline-delimited {"progress":0.5, "message":"Scanning..."}
+stdout → {"status":"success", "summary":"...", "data":{}, "artifacts":{}}
+```
+
+### Registry entry
+
+```yaml
+external_plugins:
+  mytool:
+    plugin_type: "binary"
+    description: "My Go/Rust tool, speaks the forge binary protocol"
+    private: true
+    binary_source:
+      manager: "github_release"
+      repo: "org/mytool"
+      tag: "v1.0.0"
+      asset: "mytool_{os}_{arch}"   # {os} → darwin/linux, {arch} → amd64/arm64
+      binary: "mytool"
+      install_dir: "~/.local/bin"   # optional, default: ~/.local/bin
+```
+
+Binary plugins are downloaded, chmod +x'd, and introspected automatically during
+`forge plugin install`. The introspection result is cached at
+`~/.config/forge/binary-plugins.json` and loaded by `forge` on startup alongside
+Python entry-point plugins.
+
+> See [AUTHENTICATION.md](./AUTHENTICATION.md) for how to authenticate private
+> `github_release` downloads using `gh auth login` or `GITHUB_TOKEN`.
 
 ---
 
@@ -757,4 +808,4 @@ See `docs/WRAPPER_TEMPLATE.md` for detailed wrapper templates.
 
 - **Issues:** https://github.com/chainguard-dev/forge/issues
 - **Documentation:** https://github.com/chainguard-dev/forge/tree/main/docs
-- **Plugin Registry:** https://github.com/chainguard-dev/forge/blob/main/plugins-registry.yaml
+- **Plugin Registry:** https://github.com/chainguard-dev/forge/blob/main/packages/forge-cli/src/forge_cli/data/plugins-registry.yaml

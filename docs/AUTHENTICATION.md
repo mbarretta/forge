@@ -235,6 +235,59 @@ forge plugin install my-plugin
 
 ---
 
+## Binary Plugin Downloads (`github_release`)
+
+Some plugins use the `github_release` system dep manager to download pre-built binaries from
+GitHub Releases instead of building from source. Authentication works via the `gh` CLI or a
+`GITHUB_TOKEN` environment variable.
+
+### Public releases
+
+No authentication needed — binaries on public repos download without credentials.
+
+### Private releases (recommended: `gh` CLI)
+
+If you have the `gh` CLI installed and authenticated (`gh auth login`), FORGE uses it
+automatically:
+
+```bash
+# One-time setup
+gh auth login
+
+# Plugin install picks this up automatically
+forge plugin install my-binary-plugin
+```
+
+### Private releases (CI / no `gh` CLI): `GITHUB_TOKEN`
+
+```bash
+# Set in your shell or CI environment
+export GITHUB_TOKEN=ghp_...
+
+forge plugin install my-binary-plugin
+```
+
+In GitHub Actions, `${{ secrets.GITHUB_TOKEN }}` is already available:
+
+```yaml
+- name: Install FORGE binary plugin
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: forge plugin install my-binary-plugin
+```
+
+### Verify access
+
+```bash
+# Check gh authentication
+gh auth status
+
+# Test access to a private release
+gh release list --repo org/my-binary-plugin
+```
+
+---
+
 ## Organizational Access
 
 For private repositories in GitHub organizations, ensure you have proper access.
@@ -358,7 +411,7 @@ which git
 uv pip install git+ssh://git@github.com/org/plugin.git
 
 # 4. Check registry URL is correct
-cat plugins-registry.yaml | grep -A5 "plugin-name"
+grep -A5 "plugin-name" packages/forge-cli/src/forge_cli/data/plugins-registry.yaml
 ```
 
 ---

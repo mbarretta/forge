@@ -44,8 +44,10 @@ dependencies = [
     "mytool @ git+https://github.com/your-org/mytool.git@v2.0.0",
 ]
 
+# IMPORTANT: use a namespaced module path — never "forge_plugin:create_plugin" (top-level
+# collision risk). "forge_mytool_wrapper.plugin:create_plugin" is correct.
 [project.entry-points."forge.plugins"]
-mytool = "forge_mytool_wrapper:create_plugin"
+mytool = "forge_mytool_wrapper.plugin:create_plugin"
 
 [build-system]
 requires = ["hatchling"]
@@ -96,6 +98,7 @@ class MyToolPlugin:
     name = "mytool"
     description = "MyTool functionality via FORGE"
     version = "1.0.0"
+    requires_auth = False  # Set True if your wrapper needs a chainctl token
 
     def get_params(self) -> list[ToolParam]:
         """Declare parameters that map to MyTool's interface."""
@@ -271,6 +274,7 @@ class CLIToolPlugin:
     name = "cli-tool"
     description = "External CLI tool via FORGE"
     version = "1.0.0"
+    requires_auth = False
 
     def get_params(self) -> list[ToolParam]:
         """Declare parameters that map to CLI flags."""
@@ -430,6 +434,7 @@ class HybridToolPlugin:
     name = "hybrid-tool"
     description = "Hybrid tool with library and CLI support"
     version = "1.0.0"
+    requires_auth = False
 
     def get_params(self) -> list[ToolParam]:
         return [
@@ -536,6 +541,7 @@ class APIToolPlugin:
     name = "api-tool"
     description = "Tool with HTTP API"
     version = "1.0.0"
+    requires_auth = False  # Set True if you want FORGE to inject a chainctl token
 
     def get_params(self) -> list[ToolParam]:
         return [
@@ -797,8 +803,9 @@ dependencies = [
     # No upstream dep here — binary is installed via system_deps in registry
 ]
 
+# IMPORTANT: use a namespaced module path — never "forge_plugin:create_plugin"
 [project.entry-points."forge.plugins"]
-mytool = "forge_mytool_wrapper:create_plugin"
+mytool = "forge_mytool_wrapper.plugin:create_plugin"
 
 [build-system]
 requires = ["hatchling"]
@@ -835,6 +842,7 @@ class MyToolPlugin:
     name = "mytool"
     description = "Wraps the mytool binary"
     version = "1.0.0"
+    requires_auth = False
 
     def get_params(self) -> list[ToolParam]:
         return [
@@ -893,6 +901,13 @@ external_plugins:
       # - manager: "npm"
       #   package: "@your-org/mytool@2.0.0"
       #   binary: "mytool"
+      # Pre-built GitHub Release binary (public or private repo):
+      # - manager: "github_release"
+      #   repo: "your-org/mytool"
+      #   tag: "v1.2.3"
+      #   asset: "mytool_{os}_{arch}"   # {os}=darwin/linux, {arch}=amd64/arm64
+      #   binary: "mytool"
+      #   install_dir: "~/.local/bin"
 ```
 
 ---
