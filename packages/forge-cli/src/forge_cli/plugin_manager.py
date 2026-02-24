@@ -120,13 +120,15 @@ class PluginManager:
     def _install_package(self, package_url: str) -> int | None:
         """Install a Python package into the correct environment."""
         if self._running_as_uv_tool():
-            return self._run_uv(["tool", "inject", "forge", package_url])
+            # Target forge's isolated tool venv directly via its Python executable.
+            # This works regardless of uv version (no 'uv tool inject' needed).
+            return self._run_uv(["pip", "install", "--python", sys.executable, package_url])
         return self._run_uv(["pip", "install", package_url])
 
     def _uninstall_package(self, package_name: str) -> int | None:
         """Uninstall a Python package from the correct environment."""
         if self._running_as_uv_tool():
-            return self._run_uv(["tool", "inject", "--remove", "forge", package_name])
+            return self._run_uv(["pip", "uninstall", "--python", sys.executable, "-y", package_name])
         return self._run_uv(["pip", "uninstall", "-y", package_name])
 
     def list_available(self, tag_filter: str | None = None) -> dict[str, dict[str, Any]]:
