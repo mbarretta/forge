@@ -13,6 +13,7 @@ This document is a self-contained recipe for converting any existing tool into a
 5. [Complete File Templates](#5-complete-file-templates)
 6. [Worked Examples](#6-worked-examples)
 7. [Validation Checklist](#7-validation-checklist)
+8. [Advanced Topics](#8-advanced-topics)
 
 ---
 
@@ -1066,3 +1067,139 @@ After completing the migration, verify each item:
 - [ ] `forge <name> --help` shows the correct parameters and descriptions
 - [ ] `forge <name> <valid-args>` executes successfully
 - [ ] Running `forge` with no arguments lists the new tool
+
+---
+
+## 8. Advanced Topics
+
+### 8.1 Module Namespacing (Required)
+
+All plugins **must** use a namespaced module path in their entry point declaration. Using the bare `forge_plugin` module name causes a collision when multiple plugins are installed — whichever installs last overwrites the other's entry point.
+
+**Correct** (namespaced):
+```toml
+[project.entry-points."forge.plugins"]
+gauge = "gauge.forge_plugin:create_plugin"
+```
+
+**Wrong** (bare — will cause collision):
+```toml
+[project.entry-points."forge.plugins"]
+gauge = "forge_plugin:create_plugin"   # ← never do this
+```
+
+FORGE will emit a warning at startup if it detects a non-namespaced entry point.
+
+### 8.2 `requires_auth` Field
+
+Declare whether your plugin needs a Chainguard auth token. The runner only calls `chainctl` when the plugin needs it — plugins with `requires_auth = False` work without `chainctl` installed.
+
+```python
+class MyPlugin:
+    name = "my-tool"
+    requires_auth = False   # no chainctl needed
+    # ... or ...
+    requires_auth = True    # runner fetches token before run()
+```
+
+### 8.3 `github_release` System Dependency Manager
+
+For plugins that ship pre-built binaries on GitHub Releases:
+
+```yaml
+# plugins-registry.yaml
+my-tool:
+  package: "my-tool-wrapper"
+  source: "git+https://github.com/org/my-tool-wrapper.git"
+  plugin_type: "wrapper"
+  system_deps:
+    - manager: "github_release"
+      repo: "org/my-tool"
+      tag: "v1.2.3"
+      asset: "my-tool_{os}_{arch}"   # expands to e.g. my-tool_darwin_arm64
+      binary: "my-tool"
+      install_dir: "~/.local/bin"    # optional, default: ~/.local/bin
+```
+
+Asset name templates support `{os}` and `{arch}` placeholders:
+
+| Platform | `{os}` | `{arch}` |
+|----------|--------|----------|
+| macOS (Apple Silicon) | `darwin` | `arm64` |
+| macOS (Intel) | `darwin` | `amd64` |
+| Linux (x86_64) | `linux` | `amd64` |
+| Linux (aarch64) | `linux` | `arm64` |
+| Windows | `windows` | `amd64` |
+
+**Authentication for private releases**: set `GITHUB_TOKEN` env var, or install the `gh` CLI (`gh auth login`). The installer tries `gh release download` first (respects `gh` auth), then falls back to the GitHub API with `GITHUB_TOKEN`.
+
+### 8.4 Binary Protocol Plugins (No Python Wrapper)
+
+If your team doesn't want to maintain a Python wrapper repo, any binary that speaks the forge stdio protocol can be a FORGE plugin directly.
+
+#### Protocol
+
+```
+# Introspection (called at install time):
+binary --forge-introspect
+stdout → {
+  "name": "my-tool",
+  "description": "Does something",
+  "version": "1.0.0",
+  "requires_auth": false,
+  "params": [
+    {"name": "input", "description": "Input file", "type": "path", "required": true},
+    {"name": "verbose", "description": "Verbose output", "type": "bool"}
+  ]
+}
+
+# Execution:
+binary --forge-run '{"input": "/path/to/file", "verbose": true}'
+stderr → newline-delimited progress events: {"progress": 0.5, "message": "Scanning..."}
+stdout → {"status": "success", "summary": "Scanned 42 items", "data": {}, "artifacts": {}}
+```
+
+Valid `status` values: `"success"`, `"failure"`, `"partial"`, `"cancelled"`.
+
+#### Registry Entry
+
+```yaml
+my-binary-tool:
+  plugin_type: "binary"
+  binary_source:
+    manager: "github_release"
+    repo: "org/my-binary-tool"
+    tag: "v1.0.0"
+    asset: "my-binary-tool_{os}_{arch}"
+    binary: "my-binary-tool"
+    install_dir: "~/.local/bin"
+  description: "My Go/Rust tool, speaks forge binary protocol"
+  private: true
+  tags: [security]
+```
+
+Install with `forge plugin install my-binary-tool`. FORGE downloads the binary, runs `--forge-introspect`, and caches the result at `~/.config/forge/binary-plugins.json`. The tool is then available as `forge my-binary-tool --help`.
+
+### 8.5 Private Repository Support
+
+| Plugin type | Auth method |
+|-------------|-------------|
+| Python (`git+ssh://`) | SSH key added to GitHub |
+| Python (`git+https://`) | `gh auth login` |
+| Binary (`github_release`, public) | No auth needed |
+| Binary (`github_release`, private) | `GITHUB_TOKEN` env var or `gh auth login` |
+
+### 8.6 Config File
+
+Plugins can read per-user configuration from `~/.config/forge/config.yaml` via `ctx.config`:
+
+```python
+def run(self, args: dict, ctx: ExecutionContext) -> ToolResult:
+    default_org = ctx.config.get("default_org", "")
+    org = args.get("org") or default_org
+```
+
+```yaml
+# ~/.config/forge/config.yaml
+default_org: "my-chainguard-org"
+```

@@ -1,0 +1,69 @@
+# FORGE External Plugin Registry
+#
+# This registry lists external plugins that can be installed via `forge plugin install`.
+# External plugins are installed from git repositories and work alongside built-in plugins.
+#
+# Format:
+#   plugin-name:
+#     package: "python-package-name"         # for plugin_type: native/wrapper
+#     source: "git+https://..."              # for plugin_type: native/wrapper
+#     ref: "v1.0.0"                          # Optional: git tag, branch, or commit hash
+#     description: "Plugin description"
+#     plugin_type: "native" | "wrapper" | "binary"
+#     tags: [tag1, tag2]
+#     private: true/false
+#     system_deps:                           # Optional: non-Python binaries
+#       - manager: "go" | "npm" | "github_release"
+#         # For go/npm:
+#         package: "github.com/org/tool@v1.2.3"
+#         binary: "tool"
+#         # For github_release:
+#         repo: "org/tool"
+#         tag: "v1.2.3"
+#         asset: "tool_{os}_{arch}"          # {os} and {arch} are expanded at install time
+#         binary: "tool"
+#         install_dir: "~/.local/bin"        # Optional, default: ~/.local/bin
+#
+#   # Binary protocol plugins (no Python wrapper needed):
+#   mytool:
+#     plugin_type: "binary"
+#     binary_source:
+#       manager: "github_release"
+#       repo: "org/mytool"
+#       tag: "v1.0.0"
+#       asset: "mytool_{os}_{arch}"
+#       binary: "mytool"
+#       install_dir: "~/.local/bin"
+#     description: "My tool, speaks forge binary protocol"
+#     private: true
+#
+# Plugin Types:
+#   - native:  External project implements ToolPlugin directly (Python entry points)
+#   - wrapper: FORGE provides a Python adapter that wraps an external binary
+#   - binary:  Any binary that speaks the forge stdio protocol (no Python wrapper needed)
+#
+# Authentication for private repos:
+#   - HTTPS URLs: configure git credentials (gh auth login)
+#   - SSH URLs: ensure SSH key is added to GitHub
+#   - github_release: set GITHUB_TOKEN env var or use gh CLI
+
+external_plugins:
+  gauge:
+    package: "gauge"
+    source: "git+https://github.com/chainguard-dev/gauge.git"
+    # TODO: update to stable tag (e.g. v2.2.0) once chainguard-dev/gauge#24 is merged and tagged
+    ref: "4f28a3d7d8db7c987a9d704c476f88e22b585012"
+    description: "Container vulnerability scanning and image matching"
+    plugin_type: "native"
+    tags: [security, scanning, vulnerability, matching]
+    private: false
+
+  provenance:
+    package: "verify-provenance"
+    source: "git+https://github.com/mbarretta/cgr_verify_provenance.git"
+    # TODO: update to stable tag (e.g. v0.2.0) once mbarretta/cgr_verify_provenance#1 is merged and tagged
+    ref: "22c892f1ac3643c23dd3e76898f71dce7fb78632"
+    description: "Verify Chainguard image provenance and delivery authenticity"
+    plugin_type: "native"
+    tags: [security, provenance, verification, authenticity]
+    private: true

@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test serve worker dev clean
+.PHONY: install lint format typecheck test clean
 
 install:
 	uv sync
@@ -10,22 +10,13 @@ format:
 	uv run ruff format packages/
 
 typecheck:
-	uv run mypy packages/forge-core/src packages/forge-cli/src packages/forge-api/src
+	uv run mypy packages/forge-core/src packages/forge-cli/src
 
 test:
 	uv run pytest tests/ -v
 
-# Run API server locally (requires Redis running)
-serve:
-	uv run forge serve --reload
-
-# Run ARQ worker locally (requires Redis running)
-worker:
-	uv run arq forge_api.worker.WorkerSettings
-
-# Run everything locally with docker-compose
-dev:
-	docker compose up --build
+test-cov:
+	uv run pytest tests/ -v --cov=packages --cov-report=xml
 
 clean:
 	rm -rf .venv __pycache__ .mypy_cache .pytest_cache .ruff_cache

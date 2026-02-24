@@ -1,7 +1,11 @@
-# FORGE External Plugin Registry
+# FORGE External Plugin Registry — REFERENCE COPY ONLY
 #
-# This registry lists external plugins that can be installed via `forge plugin install`.
-# External plugins are installed from git repositories and work alongside built-in plugins.
+# The active bundled registry is at:
+#   packages/forge-cli/src/forge_cli/data/plugins-registry.yaml
+#
+# This root copy is no longer loaded by default. Edit the bundled copy instead.
+# It can still be used for local overrides by setting:
+#   FORGE_PLUGIN_REGISTRY=/path/to/this/file forge plugin list
 #
 # Format:
 #   plugin-name:

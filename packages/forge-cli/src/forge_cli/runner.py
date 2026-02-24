@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 import threading
+from pathlib import Path
 from typing import Any
+
+import yaml
 
 from forge_core.auth import get_chainctl_token
 from forge_core.context import ExecutionContext
@@ -16,6 +20,15 @@ TYPE_MAP: dict[str, type] = {
     "int": int,
     "float": float,
     "bool": bool,
+    "path": Path,
+}
+
+# Exit codes per status
+_STATUS_EXIT_CODES: dict[ResultStatus, int] = {
+    ResultStatus.SUCCESS: 0,
+    ResultStatus.FAILURE: 1,
+    ResultStatus.PARTIAL: 2,
+    ResultStatus.CANCELLED: 130,
 }
 
 
@@ -30,7 +43,7 @@ def detect_subcommand(params: list[ToolParam]) -> ToolParam | None:
     return None
 
 
-def add_params_to_parser(parser, params: list[ToolParam]) -> None:
+def add_params_to_parser(parser: argparse.ArgumentParser, params: list[ToolParam]) -> None:
     """Add ToolParam declarations to an argparse.ArgumentParser.
 
     Args:
@@ -45,7 +58,7 @@ def add_params_to_parser(parser, params: list[ToolParam]) -> None:
 
         if param.type == "bool":
             # Boolean params become --flag / --no-flag
-            kwargs["action"] = "store_true"
+            kwargs["action"] = argparse.BooleanOptionalAction
             kwargs["default"] = param.default if param.default is not None else False
         else:
             kwargs["type"] = TYPE_MAP.get(param.type, str)
@@ -64,6 +77,17 @@ def _console_progress(fraction: float, message: str) -> None:
     print(f"  [{pct:3d}%] {message}", file=sys.stderr, flush=True)
 
 
+def _load_config() -> dict:
+    """Load forge config from ~/.config/forge/config.yaml, if present."""
+    config_path = Path.home() / ".config" / "forge" / "config.yaml"
+    if config_path.exists():
+        try:
+            return yaml.safe_load(config_path.read_text()) or {}
+        except Exception:
+            pass
+    return {}
+
+
 def run_plugin(plugin: ToolPlugin, args: dict[str, Any]) -> int:
     """Run a plugin in-process and return an exit code.
 
@@ -72,17 +96,20 @@ def run_plugin(plugin: ToolPlugin, args: dict[str, Any]) -> int:
         args: Dict of parsed arguments.
 
     Returns:
-        0 on success, 1 on failure.
+        0 on SUCCESS, 1 on FAILURE, 2 on PARTIAL, 130 on CANCELLED.
     """
-    # Get auth token
-    try:
-        token = get_chainctl_token()
-    except RuntimeError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
+    # Only fetch auth token when the plugin declares it needs one
+    auth_token = ""
+    if getattr(plugin, "requires_auth", True):
+        try:
+            auth_token = get_chainctl_token()
+        except RuntimeError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
 
     ctx = ExecutionContext(
-        auth_token=token,
+        auth_token=auth_token,
+        config=_load_config(),
         on_progress=_console_progress,
         cancel_event=threading.Event(),
     )
@@ -105,4 +132,4 @@ def run_plugin(plugin: ToolPlugin, args: dict[str, Any]) -> int:
         for name, path in result.artifacts.items():
             print(f"  {name}: {path}")
 
-    return 0 if result.status == ResultStatus.SUCCESS else 1
+    return _STATUS_EXIT_CODES.get(result.status, 1)
