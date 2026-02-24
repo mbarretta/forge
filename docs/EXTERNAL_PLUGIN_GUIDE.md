@@ -84,6 +84,29 @@ build-backend = "hatchling.build"
 - Entry point value points to a `create_plugin()` factory function
 - Entry point name becomes the CLI command: `forge my-scanner`
 
+**If your plugin depends on another package that is not on PyPI**, declare it with a full git URL instead of a plain version specifier, and tell hatchling to allow direct references:
+
+```toml
+[project]
+dependencies = [
+    "forge-core>=0.1.0",
+    "my-lib @ git+https://github.com/your-org/my-lib.git",  # not on PyPI
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true  # required when any dep uses a URL
+```
+
+> **Pitfall — `[tool.uv.sources]` path overrides are silently skipped during remote installs.**
+> It is common in monorepo development to use `[tool.uv.sources]` to point at a local path:
+> ```toml
+> [tool.uv.sources]
+> my-lib = { path = "../my-lib" }
+> ```
+> This is fine for local development but uv ignores `[tool.uv.sources]` when installing a
+> package from a git URL (e.g. `uv pip install git+https://...`).  The `[project.dependencies]`
+> entry must already resolve on its own — using the git URL approach above.
+
 ### Step 4: Implement ToolPlugin Protocol
 
 **File: `src/my_security_scanner/plugin.py`**
@@ -191,6 +214,17 @@ class MyScannerPlugin:
                     "report": output_path,  # Files produced by your tool
                 },
             )
+
+        # TIP: For plugins that produce rich text output (markdown reports, emails, etc.),
+        # put the text in data["output"] and keep summary as a short status line:
+        #
+        #     return ToolResult(
+        #         status=ResultStatus.SUCCESS,
+        #         summary="Report generated",     # short; shown as fallback
+        #         data={"output": markdown_text},  # printed as main output by the runner
+        #     )
+        #
+        # The runner prints data["output"] when present, falling back to summary.
 
         except Exception as e:
             return ToolResult(
@@ -312,6 +346,26 @@ external_plugins:
     tags: [security, scanning]
     private: true  # Set to false for public repos
 ```
+
+**If the plugin lives in a subdirectory of a larger repo** (e.g. a `forge-plugin/` folder inside a
+multi-purpose project), append `#subdirectory=<path>` to the source URL. The `@ref` must come
+**before** the `#` fragment:
+
+```yaml
+external_plugins:
+  my-scanner:
+    package: "my-security-scanner"
+    source: "git+https://github.com/your-org/big-project.git#subdirectory=forge-plugin"
+    ref: "v1.0.0"   # injected as ...git@v1.0.0#subdirectory=forge-plugin at install time
+    description: "Scanner living inside big-project/forge-plugin/"
+    plugin_type: "native"
+    tags: [security, scanning]
+    private: true
+```
+
+The corresponding `forge-plugin/pyproject.toml` should use `packages = ["src/my_security_scanner"]`
+in `[tool.hatch.build.targets.wheel]` so hatchling only packages the plugin source, not the whole
+outer project.
 
 ### Testing Your Plugin
 
