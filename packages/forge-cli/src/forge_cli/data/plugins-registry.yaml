@@ -72,7 +72,7 @@ external_plugins:
     package: "forge-doc-suggester"
     source: "git+https://github.com/mbarretta/doc-suggester.git#subdirectory=forge-plugin"
     # TODO: update to stable tag once mbarretta/doc-suggester is tagged
-    ref: "0e101f0"
+    ref: "302375c"
     description: "Recommend relevant Chainguard blogs and docs for a prospect based on SE notes"
     plugin_type: "native"
     tags: [docs, blog, suggestions, ai]
