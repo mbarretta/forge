@@ -53,6 +53,7 @@ class BinaryPlugin:
         if proc.stderr is None:
             raise RuntimeError("subprocess.Popen stderr is None despite stderr=PIPE")
         for line in proc.stderr:
+            stripped = line.rstrip()
             if not stripped:
                 continue
             try:

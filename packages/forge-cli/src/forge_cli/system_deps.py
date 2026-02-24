@@ -199,6 +199,8 @@ def _try_gh_download(
     """Attempt download via gh CLI. Returns None if gh is unavailable or the download fails."""
     if not shutil.which("gh"):
         return None
+    if not spec.tag or not spec.repo:
+        return None
     result = subprocess.run(
         [
             "gh", "release", "download", spec.tag,
