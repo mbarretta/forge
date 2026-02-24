@@ -126,8 +126,12 @@ def run_plugin(plugin: ToolPlugin, args: dict[str, Any]) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
-    # Print result summary
-    print(f"\n{result.summary}")
+    # Print result — show "output" from data if present, else fall back to summary
+    output = result.data.get("output") if result.data else None
+    if output:
+        print(f"\n{output}")
+    else:
+        print(f"\n{result.summary}")
 
     if result.artifacts:
         print("\nArtifacts:")
