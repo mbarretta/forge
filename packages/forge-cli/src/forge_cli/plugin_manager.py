@@ -6,6 +6,7 @@ Uses UV for git-based package installation with support for private GitHub repos
 
 from __future__ import annotations
 
+import importlib.metadata
 import importlib.resources
 import json
 import os
@@ -485,6 +486,31 @@ class PluginManager:
         return 0
 
 
+def is_plugin_installed(info: dict[str, Any]) -> bool:
+    """Return True if the plugin's package is currently installed in this environment."""
+    plugin_type = info.get("plugin_type", "native")
+    if plugin_type == "binary":
+        cache_path = Path.home() / ".config" / "forge" / "binary-plugins.json"
+        if not cache_path.exists():
+            return False
+        try:
+            cache = json.loads(cache_path.read_text())
+            binary = info.get("binary_source", {}).get("binary", "")
+            return any(
+                v.get("binary_path", "").endswith(binary) for v in cache.values()
+            )
+        except Exception:
+            return False
+    package = info.get("package", "")
+    if not package:
+        return False
+    try:
+        importlib.metadata.version(package)
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
+
+
 def format_plugin_list(
     plugins: dict[str, dict[str, Any]], verbose: bool = False
 ) -> str:
@@ -492,18 +518,22 @@ def format_plugin_list(
     if not plugins:
         return "No external plugins available in registry"
 
-    lines = ["Available external plugins:\n"]
+    lines = ["Available external plugins (✓ = installed):\n"]
 
     for name in sorted(plugins):
         info = plugins[name]
         desc = info.get("description", "No description")
         plugin_type = info.get("plugin_type", "unknown")
         is_private = info.get("private", False)
+        installed = is_plugin_installed(info)
 
+        install_marker = "✓" if installed else " "
         privacy_marker = " [PRIVATE]" if is_private else ""
         type_marker = f" [{plugin_type}]"
 
-        lines.append(f"  {name:<20} {desc}{type_marker}{privacy_marker}")
+        lines.append(
+            f"  {install_marker} {name:<20} {desc}{type_marker}{privacy_marker}"
+        )
 
         if verbose:
             if plugin_type == "binary":
