@@ -76,3 +76,12 @@ external_plugins:
     plugin_type: "native"
     tags: [docs, blog, suggestions, ai]
     private: true
+
+  forge-cgr-utils:
+    package: "forge-cgr-utils"
+    source: "git+https://github.com/mbarretta/forge-cgr-utils.git"
+    ref: "main"
+    description: "Chainguard field utilities: APK search and more"
+    plugin_type: "native"
+    tags: [packages, apk, wolfi, chainguard, utilities]
+    private: false

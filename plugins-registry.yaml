@@ -59,7 +59,7 @@ external_plugins:
     description: "Container vulnerability scanning and image matching"
     plugin_type: "native"
     tags: [security, scanning, vulnerability, matching]
-    private: false
+    private: true
 
   provenance:
     package: "verify-provenance"
@@ -69,7 +69,7 @@ external_plugins:
     description: "Verify Chainguard image provenance and delivery authenticity"
     plugin_type: "native"
     tags: [security, provenance, verification, authenticity]
-    private: true
+    private: false
 
   doc-suggester:
     package: "forge-doc-suggester"
@@ -79,4 +79,21 @@ external_plugins:
     description: "Recommend relevant Chainguard blogs and docs for a prospect based on SE notes"
     plugin_type: "native"
     tags: [docs, blog, suggestions, ai]
-    private: true
+    private: false
+
+  libraries-coverage:
+    package: "libraries-coverage"
+    source: "git+https://github.com/mbarretta/libraries-coverage-plugin.git"
+    description: "Check and request Chainguard Libraries coverage for Python, JS, and Java"
+    plugin_type: "native"
+    tags: [libraries, coverage, python, java, javascript]
+    private: false
+
+  forge-cgr-utils:
+    package: "forge-cgr-utils"
+    source: "git+https://github.com/mbarretta/forge-cgr-utils.git"
+    ref: "main"
+    description: "Chainguard field utilities: APK search and more"
+    plugin_type: "native"
+    tags: [packages, apk, wolfi, chainguard, utilities]
+    private: false
