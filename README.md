@@ -6,24 +6,14 @@ FORGE is a single-user CLI tool that consolidates field engineering tools into a
 
 ## Available Tools
 
-FORGE ships with `hello` as a bundled example plugin. Field tools like **gauge** and **provenance** live in external repositories.
+FORGE ships with `hello` as a bundled example plugin. Field tools like **gauge** and **provenance** live in external repositories and are installed on-demand.
 
 ```bash
 # See all installable plugins from the registry
 forge plugin list
 
-# Install the container vulnerability scanner
-forge plugin install gauge
-
-# Install the image delivery verification tool
-forge plugin install provenance
-```
-
-Once installed, tools are available as standard FORGE commands:
-
-```bash
-forge gauge --help
-forge provenance --help
+# Install a plugin
+forge plugin install <name>
 ```
 
 ### Managing Plugins
@@ -49,11 +39,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Install FORGE globally
 uv tool install --editable .
 
-# Install the tools you need
-forge plugin install gauge
-forge plugin install provenance
-
-# Verify
+# Verify and browse available plugins
 forge --version
 forge plugin list
 ```
@@ -70,38 +56,12 @@ uv run forge plugin list
 
 ---
 
-## Usage
-
-### Gauge — Vulnerability Scanning
-
-```bash
-forge gauge scan \
-  --input nginx:latest \
-  --output vuln_summary,cost_analysis \
-  --customer "Acme Corp"
-
-forge gauge match \
-  --input images.csv \
-  --output-dir ./output
-```
-
-### Provenance — Delivery Verification
-
-```bash
-forge provenance \
-  --customer-org my-customer-org \
-  --output verification-report.csv
-```
-
----
-
 ## Authentication
 
 Tools that interact with Chainguard services require `chainctl`:
 
 ```bash
 chainctl auth login
-forge gauge scan --organization my-org
 ```
 
 Plugins declare whether they need auth via `requires_auth`. Plugins with `requires_auth = False` (like `hello`) work without `chainctl` installed.
@@ -201,22 +161,6 @@ forge plugin update <name>          # Update a plugin
 forge plugin remove <name>          # Remove a plugin
 forge --help                        # Show help
 forge <tool> --help                 # Tool-specific help
-```
-
----
-
-## CI/CD Integration
-
-```yaml
-# GitHub Actions example
-- name: Scan container images
-  run: |
-    uv tool install git+https://github.com/chainguard/forge
-    forge plugin install gauge
-    forge gauge scan \
-      --input production-images.csv \
-      --output vuln_summary,cost_analysis \
-      --output-dir ./reports
 ```
 
 ---
