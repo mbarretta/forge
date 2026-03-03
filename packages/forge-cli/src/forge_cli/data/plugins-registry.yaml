@@ -51,8 +51,7 @@ external_plugins:
   gauge:
     package: "gauge"
     source: "git+https://github.com/chainguard-dev/gauge.git"
-    # TODO: update to stable tag (e.g. v2.2.0) once chainguard-dev/gauge#24 is merged and tagged
-    ref: "f8ab9f8"
+    ref: "latest"
     description: "Container vulnerability scanning and image matching"
     plugin_type: "native"
     tags: [security, scanning, vulnerability, matching]
@@ -61,8 +60,7 @@ external_plugins:
   provenance:
     package: "verify-provenance"
     source: "git+https://github.com/mbarretta/cgr_verify_provenance.git"
-    # TODO: update to stable tag (e.g. v0.2.0) once mbarretta/cgr_verify_provenance#1 is merged and tagged
-    ref: "22c892f1ac3643c23dd3e76898f71dce7fb78632"
+    ref: "latest"
     description: "Verify Chainguard image provenance and delivery authenticity"
     plugin_type: "native"
     tags: [security, provenance, verification, authenticity]
@@ -71,7 +69,7 @@ external_plugins:
   doc-suggester:
     package: "forge-doc-suggester"
     source: "git+https://github.com/mbarretta/doc-suggester.git#subdirectory=forge-plugin"
-    ref: "v0.2.0"
+    ref: "latest"
     description: "Recommend relevant Chainguard blogs and docs for a prospect based on SE notes"
     plugin_type: "native"
     tags: [docs, blog, suggestions, ai]

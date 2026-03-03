@@ -10,8 +10,11 @@ import importlib.metadata
 import importlib.resources
 import json
 import os
+import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -175,6 +178,33 @@ class PluginManager:
 
         return self._install_python_plugin(name, plugin_info, ref, strict)
 
+    def _resolve_latest_github_release(self, source_url: str) -> str | None:
+        """Query GitHub API for the latest release tag of a plugin's source repo.
+
+        Returns the tag name (e.g. 'v1.2.3') or None on failure.
+        """
+        match = re.search(r"github\.com[/:]([^/]+/[^/.#]+)", source_url)
+        if not match:
+            return None
+        repo_slug = match.group(1)
+
+        token = os.environ.get("GITHUB_TOKEN", "")
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+
+        api_url = f"https://api.github.com/repos/{repo_slug}/releases/latest"
+        try:
+            req = urllib.request.Request(api_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+                return data.get("tag_name")
+        except Exception:
+            return None
+
     def _install_python_plugin(
         self, name: str, plugin_info: dict[str, Any], ref: str | None, strict: bool
     ) -> int:
@@ -183,6 +213,17 @@ class PluginManager:
         is_private = plugin_info.get("private", False)
 
         ref_to_use = ref or plugin_info.get("ref")
+        if ref_to_use == "latest":
+            resolved = self._resolve_latest_github_release(git_url)
+            if resolved:
+                print(f"  Resolved latest release: {resolved}")
+                ref_to_use = resolved
+            else:
+                print(
+                    f"  Warning: could not resolve latest release for '{name}', installing HEAD",
+                    file=sys.stderr,
+                )
+                ref_to_use = None
         if ref_to_use:
             # @ref must come before any # fragment (e.g. #subdirectory=...)
             if "#" in git_url:
