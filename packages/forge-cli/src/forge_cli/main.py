@@ -58,33 +58,70 @@ def _show_version(plugins: dict) -> None:
         print(f"  {name:<20} {plugin.version}")
 
 
+def _forge_venv_python() -> "Path":
+    """Return the Python interpreter inside forge's uv tool venv."""
+    from pathlib import Path
+
+    return Path.home() / ".local" / "share" / "uv" / "tools" / "forge" / "bin" / "python"
+
+
 def _run_update(argv: list[str]) -> int:
-    """Update FORGE and all plugins via uv tool upgrade."""
+    """Update FORGE itself, then reinstall all previously-installed external plugins."""
+    from forge_cli import FORGE_SOURCE_URL
+    from forge_cli.plugin_manager import PluginManager, is_plugin_installed
+
     parser = argparse.ArgumentParser(prog="forge update")
     parser.add_argument(
-        "--dry-run", action="store_true", help="Check for updates without applying"
+        "--dry-run", action="store_true", help="Show what would be updated without applying changes"
     )
     args = parser.parse_args(argv)
 
-    repo_url = "git+https://github.com/chainguard/forge"
-    cmd = ["uv", "tool", "upgrade", "forge", "--from", repo_url]
-
-    if args.dry_run:
-        print("Checking for updates...")
-        print("Current versions:")
-        plugins = discover_plugins()
-        _show_version(plugins)
-        return 0
-
-    print("Updating FORGE...")
-    result = subprocess.run(cmd, capture_output=False)
-    if result.returncode != 0:
-        print("Update failed.", file=sys.stderr)
+    if not PluginManager._running_as_uv_tool():
+        print("Warning: forge is not installed as a uv tool. Run:")
+        print(f"  uv tool install --force {FORGE_SOURCE_URL}")
+        print("to install it as a tool first.")
         return 1
 
-    print()
-    plugins = discover_plugins()
-    _show_version(plugins)
+    manager = PluginManager()
+    registry = manager.list_available()
+
+    # Snapshot installed plugins BEFORE wiping the venv
+    installed_plugin_names = [
+        name for name, info in registry.items() if is_plugin_installed(info)
+    ]
+
+    if args.dry_run:
+        print(f"FORGE source: {FORGE_SOURCE_URL}")
+        print(f"Would update FORGE and reinstall {len(installed_plugin_names)} plugin(s):")
+        for name in installed_plugin_names:
+            print(f"  - {name}")
+        return 0
+
+    # Step 1: Update forge (wipes the isolated venv)
+    print("Updating FORGE...")
+    result = subprocess.run(
+        ["uv", "tool", "install", "--force", FORGE_SOURCE_URL],
+        capture_output=False,
+    )
+    if result.returncode != 0:
+        print("Error: FORGE update failed.", file=sys.stderr)
+        return 1
+
+    # Step 2: Reinstall plugins into the freshly-replaced venv
+    if installed_plugin_names:
+        print(f"\nReinstalling {len(installed_plugin_names)} plugin(s)...")
+        failed = []
+        for name in installed_plugin_names:
+            print(f"  Reinstalling {name}...")
+            rc = manager.install(name)
+            if rc != 0:
+                failed.append(name)
+        if failed:
+            print(f"\nWarning: failed to reinstall: {', '.join(failed)}", file=sys.stderr)
+            print("Run `forge plugin install <name>` to retry.", file=sys.stderr)
+
+    print("\nUpdate complete.")
+    _show_version(discover_plugins())
     return 0
 
 

@@ -97,7 +97,6 @@ class ToolPlugin(Protocol):
     name: str
     description: str
     version: str
-    requires_auth: bool
 
     def get_params(self) -> list[ToolParam]:
         """Declare the parameters this tool accepts."""
