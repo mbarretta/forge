@@ -52,6 +52,11 @@ mytool = "forge_mytool_wrapper.plugin:create_plugin"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+# REQUIRED: forge-core is not on PyPI; point uv at the forge git repo.
+# Do NOT use { path = "..." } — it only works locally and breaks `forge plugin install`.
+[tool.uv.sources]
+forge-core = { git = "https://github.com/mbarretta/forge.git", subdirectory = "packages/forge-core" }
 ```
 
 ### \_\_init\_\_.py
@@ -151,7 +156,7 @@ class MyToolPlugin:
         output_dir = Path(args["output"])
         output_format = args["format"]
         verbose = args["verbose"]
-        max_items = args["max-items"]
+        max_items = args["max_items"]  # hyphenated ToolParam names use underscores in args dict
 
         # Validate inputs
         if not input_path.exists():
@@ -450,7 +455,7 @@ class HybridToolPlugin:
 
     def run(self, args: dict[str, Any], ctx: ExecutionContext) -> ToolResult:
         """Execute tool, preferring library but falling back to CLI."""
-        prefer_cli = args.get("prefer-cli", False)
+        prefer_cli = args.get("prefer_cli", False)  # "prefer-cli" param → "prefer_cli" key
 
         if HAS_LIBRARY and not prefer_cli:
             # Use library if available and not explicitly disabled
@@ -571,7 +576,7 @@ class APIToolPlugin:
         """Execute API request."""
         endpoint = args["endpoint"].rstrip("/")
         resource = args["resource"]
-        api_key = args.get("api-key")
+        api_key = args.get("api_key")  # "api-key" param → "api_key" key
         timeout = args["timeout"]
 
         url = f"{endpoint}/{resource}"
@@ -810,6 +815,11 @@ mytool = "forge_mytool_wrapper.plugin:create_plugin"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+# REQUIRED: forge-core is not on PyPI; point uv at the forge git repo.
+# Do NOT use { path = "..." } — it only works locally and breaks `forge plugin install`.
+[tool.uv.sources]
+forge-core = { git = "https://github.com/mbarretta/forge.git", subdirectory = "packages/forge-core" }
 ```
 
 ### plugin.py

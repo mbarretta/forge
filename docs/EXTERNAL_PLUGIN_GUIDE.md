@@ -76,6 +76,12 @@ my-scanner = "my_security_scanner.plugin:create_plugin"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+# REQUIRED for external plugin repos: tell uv where to find forge-core, which is not on PyPI.
+# forge-core lives in the forge monorepo under packages/forge-core.
+# Do NOT use { path = "..." } here — see pitfall note below.
+[tool.uv.sources]
+forge-core = { git = "https://github.com/mbarretta/forge.git", subdirectory = "packages/forge-core" }
 ```
 
 **Key points:**
@@ -83,8 +89,25 @@ build-backend = "hatchling.build"
 - Entry point value must use a **namespaced module path** (e.g. `my_security_scanner.plugin:create_plugin`). Never use the bare name `forge_plugin` — it is reserved and will collide with any other plugin that does the same.
 - Entry point value points to a `create_plugin()` factory function
 - Entry point name becomes the CLI command: `forge my-scanner`
+- `[tool.uv.sources]` for `forge-core` is **required** in any plugin repo that doesn't live inside the forge monorepo, because `forge-core` is not published to PyPI.
 
-**If your plugin depends on another package that is not on PyPI**, declare it with a full git URL instead of a plain version specifier, and tell hatchling to allow direct references:
+> **Pitfall — `[tool.uv.sources]` path overrides break remote installs.**
+> It is common in monorepo development to use `[tool.uv.sources]` to point at a local path:
+> ```toml
+> [tool.uv.sources]
+> forge-core = { path = "../forge/packages/forge-core" }
+> ```
+> This works locally but **fails when anyone runs `forge plugin install`**. uv reads and applies
+> `[tool.uv.sources]` from the package's pyproject.toml even when installing from a git URL, so
+> it tries to resolve the path relative to the git checkout directory — which doesn't have your
+> local `../forge/` sibling. The install fails with:
+> ```
+> × Failed to download and build `forge-core @ file:///...`
+> ╰─▶ The source distribution has no subdirectory `../forge/packages/forge-core`
+> ```
+> **Always use the git URL form shown above.**
+
+**If your plugin depends on another non-PyPI package** that doesn't have a subdirectory, you can alternatively inline the URL directly in `[project.dependencies]`:
 
 ```toml
 [project]
@@ -94,18 +117,8 @@ dependencies = [
 ]
 
 [tool.hatch.metadata]
-allow-direct-references = true  # required when any dep uses a URL
+allow-direct-references = true  # required when any dep uses a URL specifier
 ```
-
-> **Pitfall — `[tool.uv.sources]` path overrides are silently skipped during remote installs.**
-> It is common in monorepo development to use `[tool.uv.sources]` to point at a local path:
-> ```toml
-> [tool.uv.sources]
-> my-lib = { path = "../my-lib" }
-> ```
-> This is fine for local development but uv ignores `[tool.uv.sources]` when installing a
-> package from a git URL (e.g. `uv pip install git+https://...`).  The `[project.dependencies]`
-> entry must already resolve on its own — using the git URL approach above.
 
 ### Step 4: Implement ToolPlugin Protocol
 
@@ -127,9 +140,17 @@ class MyScannerPlugin:
     description = "Scan container images for security issues"
     version = "1.0.0"
     requires_auth = True  # True = runner fetches a chainctl token before calling run()
+                          # False = plugin works without chainctl installed
+                          # IMPORTANT: if omitted, defaults to True
 
     def get_params(self) -> list[ToolParam]:
-        """Declare CLI parameters."""
+        """Declare CLI parameters.
+
+        Valid ToolParam types: "str" (default), "int", "float", "bool", "path"
+        Bool params render as --flag / --no-flag on the CLI (BooleanOptionalAction).
+        Hyphenated names (e.g. "fail-on-critical") are accessed in run() with underscores
+        (e.g. args["fail_on_critical"]) because argparse converts hyphens to underscores.
+        """
         return [
             ToolParam(
                 name="image",
@@ -197,7 +218,9 @@ class MyScannerPlugin:
 
             # Determine status
             critical_count = results.get("critical_count", 0)
-            if critical_count > 0 and args["fail-on-critical"]:
+            # IMPORTANT: argparse converts hyphens to underscores in dest names.
+            # ToolParam(name="fail-on-critical") is accessed as args["fail_on_critical"].
+            if critical_count > 0 and args["fail_on_critical"]:
                 status = ResultStatus.FAILURE
             else:
                 status = ResultStatus.SUCCESS
@@ -340,7 +363,9 @@ external_plugins:
   my-scanner:
     package: "my-security-scanner"
     source: "git+ssh://git@github.com/your-org/my-security-scanner.git"
-    ref: "v1.0.0"
+    ref: "latest"   # resolves to the latest GitHub Release tag at install time
+                    # use a pinned tag (e.g. "v1.0.0") or commit hash if the repo
+                    # does not publish GitHub Releases
     description: "Security scanner for container images"
     plugin_type: "native"
     tags: [security, scanning]
@@ -719,7 +744,17 @@ except Exception as e:
     return ToolResult(status=ResultStatus.FAILURE, summary=f"Unexpected error: {e}")
 ```
 
-### 4. Progress Reporting
+### 4. Hyphenated Parameter Names
+
+argparse converts hyphens to underscores when building the `args` dict passed to `run()`. A `ToolParam(name="fail-on-critical")` is accessed as `args["fail_on_critical"]` — not `args["fail-on-critical"]`.
+
+```python
+# ToolParam(name="skip-empty-layers", ...)
+skip = args["skip_empty_layers"]   # correct
+skip = args["skip-empty-layers"]   # KeyError
+```
+
+### 5. Progress Reporting
 
 Use `ctx.progress()` for long-running operations:
 
@@ -737,13 +772,14 @@ def run(self, args, ctx):
     ctx.progress(1.0, "Complete")
 ```
 
-### 5. Testing
+### 6. Testing
 
 Include tests in your plugin repository:
 
 ```python
 # tests/test_plugin.py
 from forge_core.context import ExecutionContext
+from forge_core.plugin import ResultStatus
 from my_security_scanner.plugin import MyScannerPlugin
 
 
@@ -757,7 +793,7 @@ def test_basic_scan():
     assert "vulnerabilities" in result.summary
 ```
 
-### 6. Documentation
+### 7. Documentation
 
 Include in your README:
 - Installation instructions (FORGE plugin manager + direct)
@@ -788,7 +824,7 @@ external_plugins:
   my-plugin:
     package: "my-plugin-package-name"
     source: "git+ssh://git@github.com/your-org/my-plugin.git"
-    ref: "v1.0.0"
+    ref: "latest"  # auto-resolves to latest GitHub Release; use pinned tag if no releases
     description: "Brief description of your plugin"
     plugin_type: "native"  # or "wrapper"
     tags: [security, compliance, scanning]

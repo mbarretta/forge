@@ -138,6 +138,11 @@ my-go-tool = "forge_my_go_tool:create_plugin"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+# REQUIRED: forge-core is not on PyPI; point uv at the forge git repo.
+# Do NOT use { path = "..." } — it only works locally and breaks `forge plugin install`.
+[tool.uv.sources]
+forge-core = { git = "https://github.com/mbarretta/forge.git", subdirectory = "packages/forge-core" }
 ```
 
 ### 3.3 Registry entry

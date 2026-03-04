@@ -199,6 +199,8 @@ Use the template from [section 5.1](#51-pyprojecttoml). Fill in:
 - `dependencies`: copy from source tool's requirements.txt / pyproject.toml / setup.py, plus `"forge-core"`
 - Entry point key: the CLI subcommand name
 
+> **External plugin repos only:** If the plugin lives in its own GitHub repo (not inside the forge monorepo), add a `[tool.uv.sources]` section that points `forge-core` at the forge git repo. See [section 8.6](#86-external-plugin-repos-depending-on-forge-core) for the correct way to do this and a common pitfall to avoid.
+
 ### Step 4: Copy Source Code
 
 Copy the source tool's Python modules into `src/forge_<name>/`. Apply these transformations:
@@ -605,6 +607,11 @@ build-backend = "hatchling.build"
 # CHANGEME: must match the src directory name
 packages = ["src/forge_CHANGEME"]
 
+# EXTERNAL REPO ONLY: add this section if this plugin lives in its own repo (not the forge monorepo).
+# Do NOT use { path = "..." } — it only works locally and breaks `forge plugin install`.
+# [tool.uv.sources]
+# forge-core = { git = "https://github.com/mbarretta/forge.git", subdirectory = "packages/forge-core" }
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
@@ -624,6 +631,7 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
 - [ ] All third-party dependencies from the source tool are listed with version bounds
 - [ ] `forge-core` is in dependencies
 - [ ] `packages` path under `[tool.hatch.build.targets.wheel]` matches `src/forge_<name>`
+- [ ] **External repos only:** uncomment and fill in `[tool.uv.sources]` using the git URL form, not a local path
 
 ### 5.2 __init__.py
 
@@ -1017,6 +1025,7 @@ After completing the migration, verify each item:
 - [ ] `packages/forge-<name>/src/forge_<name>/plugin.py` exists with a class implementing `ToolPlugin`
 - [ ] All source modules are copied into `src/forge_<name>/`
 - [ ] Package is added to root `pyproject.toml` workspace members
+- [ ] **External repos only:** `[tool.uv.sources]` uses a git URL for `forge-core`, not a local path (see [section 8.6](#86-external-plugin-repos-depending-on-forge-core))
 
 ### 7.2 Protocol Compliance
 
@@ -1189,7 +1198,49 @@ Install with `forge plugin install my-binary-tool`. FORGE downloads the binary, 
 | Binary (`github_release`, public) | No auth needed |
 | Binary (`github_release`, private) | `GITHUB_TOKEN` env var or `gh auth login` |
 
-### 8.6 Config File
+### 8.6 External Plugin Repos: Depending on `forge-core`
+
+This section applies when your plugin lives in its **own GitHub repo** (installed via `forge plugin install`) rather than inside the forge monorepo.
+
+`forge-core` is not published to PyPI. Plugins that live in the forge monorepo use `{ workspace = true }` to resolve it, but that option isn't available outside the workspace. You must tell uv how to find `forge-core` via a `[tool.uv.sources]` entry in your plugin's `pyproject.toml`.
+
+#### The correct approach: git URL source
+
+```toml
+[project]
+dependencies = [
+    "forge-core>=0.1.0",
+    # ... your other dependencies
+]
+
+[tool.uv.sources]
+forge-core = { git = "https://github.com/mbarretta/forge.git", subdirectory = "packages/forge-core" }
+```
+
+This works in all contexts:
+- `forge plugin install <name>` — uv resolves `forge-core` from git (or uses the already-installed version in the forge venv)
+- `uv sync` in the plugin repo during local development — same git resolution
+
+#### The common pitfall: local path source
+
+```toml
+# WRONG — do not do this
+[tool.uv.sources]
+forge-core = { path = "../forge/packages/forge-core" }
+```
+
+This path only exists on your local machine where the `forge` repo happens to be checked out as a sibling directory. When uv installs the plugin from git (i.e., when anyone runs `forge plugin install <name>`), it checks out the plugin repo into a uv cache directory and tries to resolve `../forge/packages/forge-core` relative to that path — which doesn't exist. The install fails with:
+
+```
+× Failed to download and build `forge-core @ file:///...`
+╰─▶ The source distribution has no subdirectory `../forge/packages/forge-core`
+```
+
+#### Local development with the git source
+
+With the git URL source, `uv sync` in the plugin repo will pull `forge-core` from git. If you're actively developing both `forge-core` and your plugin simultaneously, you can temporarily override with a local path using uv's `--override-source` flag or by editing `uv.lock` — but **do not commit a path source** to `pyproject.toml`.
+
+### 8.7 Config File
 
 Plugins can read per-user configuration from `~/.config/forge/config.yaml` via `ctx.config`:
 
