@@ -61,7 +61,9 @@ def _show_version(plugins: dict) -> None:
 
 def _forge_venv_python() -> Path:
     """Return the Python interpreter inside forge's uv tool venv."""
-    return Path.home() / ".local" / "share" / "uv" / "tools" / "forge" / "bin" / "python"
+    return (
+        Path.home() / ".local" / "share" / "uv" / "tools" / "forge" / "bin" / "python"
+    )
 
 
 def _run_update(argv: list[str]) -> int:
@@ -71,7 +73,9 @@ def _run_update(argv: list[str]) -> int:
 
     parser = argparse.ArgumentParser(prog="forge update")
     parser.add_argument(
-        "--dry-run", action="store_true", help="Show what would be updated without applying changes"
+        "--dry-run",
+        action="store_true",
+        help="Show what would be updated without applying changes",
     )
     args = parser.parse_args(argv)
 
@@ -91,7 +95,9 @@ def _run_update(argv: list[str]) -> int:
 
     if args.dry_run:
         print(f"FORGE source: {FORGE_SOURCE_URL}")
-        print(f"Would update FORGE and reinstall {len(installed_plugin_names)} plugin(s):")
+        print(
+            f"Would update FORGE and reinstall {len(installed_plugin_names)} plugin(s):"
+        )
         for name in installed_plugin_names:
             print(f"  - {name}")
         return 0
@@ -116,7 +122,9 @@ def _run_update(argv: list[str]) -> int:
             if rc != 0:
                 failed.append(name)
         if failed:
-            print(f"\nWarning: failed to reinstall: {', '.join(failed)}", file=sys.stderr)
+            print(
+                f"\nWarning: failed to reinstall: {', '.join(failed)}", file=sys.stderr
+            )
             print("Run `forge plugin install <name>` to retry.", file=sys.stderr)
 
     print("\nUpdate complete.")
