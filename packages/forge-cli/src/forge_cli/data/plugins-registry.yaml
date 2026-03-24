@@ -83,3 +83,16 @@ external_plugins:
     plugin_type: "native"
     tags: [packages, apk, wolfi, chainguard, utilities]
     private: false
+
+  sourcier:
+    package: "sourcier-forge"
+    source: "git+https://github.com/mbarretta/sourcier-forge.git"
+    ref: "latest"
+    description: "Show and verify provenance chains for Chainguard images"
+    plugin_type: "wrapper"
+    tags: [security, provenance, verification]
+    private: true
+    system_deps:
+      - manager: "go"
+        package: "github.com/mbarretta/sourcier-forge@latest"
+        binary: "sourcier-forge"
