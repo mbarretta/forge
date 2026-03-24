@@ -277,7 +277,7 @@ class PluginManager:
             return rc
 
         print(f"\n✓ Plugin '{name}' installed successfully")
-        print(f"\nUsage: forge {plugin_info['package']} --help")
+        print(f"\nUsage: forge {name} --help")
 
         if system_dep_failures:
             print(
