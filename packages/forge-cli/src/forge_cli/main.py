@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from pathlib import Path
 
 from forge_cli import __version__
 from forge_core.plugin import ToolPlugin
@@ -58,10 +59,8 @@ def _show_version(plugins: dict) -> None:
         print(f"  {name:<20} {plugin.version}")
 
 
-def _forge_venv_python() -> "Path":
+def _forge_venv_python() -> Path:
     """Return the Python interpreter inside forge's uv tool venv."""
-    from pathlib import Path
-
     return Path.home() / ".local" / "share" / "uv" / "tools" / "forge" / "bin" / "python"
 
 
