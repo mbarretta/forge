@@ -1,6 +1,6 @@
 # FORGE
 
-**Field Operations Resources for GTM Engineering**
+**Field Operating Resources for GTM Engineering**
 
 FORGE is a single-user CLI tool that consolidates field engineering tools into a single, consistent interface. Plugins live in external repositories and are installed on-demand.
 
