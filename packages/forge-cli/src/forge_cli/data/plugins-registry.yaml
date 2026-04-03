@@ -96,7 +96,8 @@ external_plugins:
       - manager: "go"
         package: "github.com/mbarretta/sourcier-forge@latest"
         binary: "sourcier-forge"
-        
+
+
   libraries-coverage:
     package: "libraries-coverage"
     source: "git+https://github.com/mbarretta/libraries-coverage-plugin.git"
@@ -104,4 +105,13 @@ external_plugins:
     description: "Check and request Chainguard Libraries coverage for Python, JS, and Java"
     plugin_type: "native"
     tags: [libraries, coverage, python, java, javascript]
+    private: true
+
+  cgr-compliance:
+    package: "forge-cgr-compliance"
+    source: "git+https://github.com/mbarretta/cgr-compliance-forge.git#subdirectory=packages/forge-cgr-compliance"
+    ref: "latest"
+    description: "FedRAMP POA&M generation from Grype vulnerability scans, based on JO's cgr-compliance project"
+    plugin_type: "native"
+    tags: [compliance, fedramp, poam, vulnerability, grype, nvd]
     private: true
