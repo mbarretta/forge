@@ -96,3 +96,12 @@ external_plugins:
       - manager: "go"
         package: "github.com/mbarretta/sourcier-forge@latest"
         binary: "sourcier-forge"
+        
+  libraries-coverage:
+    package: "libraries-coverage"
+    source: "git+https://github.com/mbarretta/libraries-coverage-plugin.git"
+    ref: "main"
+    description: "Check and request Chainguard Libraries coverage for Python, JS, and Java"
+    plugin_type: "native"
+    tags: [libraries, coverage, python, java, javascript]
+    private: true
