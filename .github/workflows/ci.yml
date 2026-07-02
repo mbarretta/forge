@@ -9,9 +9,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: chainguard-actions/actions-checkout@5c571b05fb026b9251781bee09aadc0d09736c72 # v7.0.0
 
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: chainguard-actions/astral-sh-setup-uv@c8fe6ea826d245c45890728fb7f72770528b81a2 # v8.2.0
         with:
           version: "latest"
 
@@ -30,9 +30,9 @@ jobs:
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: chainguard-actions/actions-checkout@5c571b05fb026b9251781bee09aadc0d09736c72 # v7.0.0
 
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: chainguard-actions/astral-sh-setup-uv@c8fe6ea826d245c45890728fb7f72770528b81a2 # v8.2.0
         with:
           version: "latest"
 
@@ -48,9 +48,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: chainguard-actions/actions-checkout@5c571b05fb026b9251781bee09aadc0d09736c72 # v7.0.0
 
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: chainguard-actions/astral-sh-setup-uv@c8fe6ea826d245c45890728fb7f72770528b81a2 # v8.2.0
         with:
           version: "latest"
 
@@ -64,7 +64,7 @@ jobs:
         run: uv run pytest tests/ -v --cov=packages --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: chainguard-actions/codecov-codecov-action@f39097008df9f057386177eb29865bf40c2510d8 # v7.0.0
         if: github.event_name == 'pull_request'
         with:
           files: ./coverage.xml
@@ -73,9 +73,9 @@ jobs:
   test-plugin-registry:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: chainguard-actions/actions-checkout@5c571b05fb026b9251781bee09aadc0d09736c72 # v7.0.0
 
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: chainguard-actions/astral-sh-setup-uv@c8fe6ea826d245c45890728fb7f72770528b81a2 # v8.2.0
         with:
           version: "latest"
 
@@ -94,11 +94,14 @@ jobs:
 
   security-scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: chainguard-actions/actions-checkout@5c571b05fb026b9251781bee09aadc0d09736c72 # v7.0.0
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        uses: chainguard-actions/aquasecurity-trivy-action@d4b58e4b9d56c13c11d7f30dbe296d7d32ec2d31 # v0.35.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
